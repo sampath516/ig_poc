@@ -13,10 +13,10 @@ import lombok.Setter;
 @Setter
 public class CreateOrganizationResponse implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private String id;
+	private long id;
 	private String name;
 	private String description;
-	private String tenantId;
+	private long tenantId;
 
 	public CreateOrganizationResponse(Organization org) {
 		this.id = org.getId();

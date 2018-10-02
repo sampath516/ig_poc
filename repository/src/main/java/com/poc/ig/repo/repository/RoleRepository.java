@@ -9,6 +9,6 @@ import com.poc.ig.repo.entity.Role;
 public interface RoleRepository extends JpaRepository<Role, String> {
 
 	@Query("select r from Role r where r.organization.id = :orgId and r.id = :roleId")
-	public Role findByOrgIdAndRoleId(@Param("orgId") String orgId, @Param("roleId") String roleId);
+	public Role findByOrgIdAndRoleId(@Param("orgId") long orgId, @Param("roleId") long roleId);
 
 }

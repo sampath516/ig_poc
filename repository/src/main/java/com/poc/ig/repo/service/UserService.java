@@ -57,7 +57,7 @@ public class UserService {
 
 	@PostMapping(path = "{orgId}/users")
 	@ResponseStatus(HttpStatus.CREATED)
-	public CreateUserResponse createUser(@PathVariable String tenantId, @PathVariable String orgId,
+	public CreateUserResponse createUser(@PathVariable long tenantId, @PathVariable long orgId,
 			@RequestBody CreateUserRequest createUserReq) {
 		Organization org = validateTenantOrganization(tenantId, orgId);
 		User user = createUserReq.getUser();
@@ -66,21 +66,21 @@ public class UserService {
 	}
 
 	@GetMapping(path = "{orgId}/users/{userId}")
-	public ResponseEntity<GetUserResponse> getUser(@PathVariable String tenantId, @PathVariable String orgId,
-			@PathVariable String userId) {
+	public ResponseEntity<GetUserResponse> getUser(@PathVariable long tenantId, @PathVariable long orgId,
+			@PathVariable long userId) {
 		User user = validateUser(tenantId, orgId, userId);
 		return new ResponseEntity<>(new GetUserResponse(user), HttpStatus.OK);
 	}
 
 	@GetMapping(path = "{orgId}/users")
 	@ResponseStatus(HttpStatus.OK)
-	public ListUsersResponse listUsers(@PathVariable String tenantId, @PathVariable String orgId) {
+	public ListUsersResponse listUsers(@PathVariable long tenantId, @PathVariable long orgId) {
 		Organization org = validateTenantOrganization(tenantId, orgId);
 		return new ListUsersResponse(org.getUsers());
 	}
 
 	@PutMapping(path = "{orgId}/users")
-	public ResponseEntity<UpdateUserResponse> updateUser(@PathVariable String tenantId, @PathVariable String orgId,
+	public ResponseEntity<UpdateUserResponse> updateUser(@PathVariable long tenantId, @PathVariable long orgId,
 			@RequestBody UpdateUserRequest updateUserReq, @RequestParam boolean basicUpdate) {
 		User user = validateUser(tenantId, orgId, updateUserReq.getId());
 		user = updateUserReq.getUpdatedUser(user, basicUpdate);
@@ -89,13 +89,13 @@ public class UserService {
 
 	@DeleteMapping(path = "{orgId}/users/{userId}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void deleteUser(@PathVariable String tenantId, @PathVariable String orgId, @PathVariable String userId) {
+	public void deleteUser(@PathVariable long tenantId, @PathVariable long orgId, @PathVariable long userId) {
 		userRepo.delete(validateUser(tenantId, orgId, userId));
 	}
 
 	@PutMapping(path = "{orgId}/users/{userId}/roles")
-	public ResponseEntity<LinkRolesResponse> linkRoles(@PathVariable String tenantId, @PathVariable String orgId,
-			@PathVariable String userId, List<String> roleIds) {
+	public ResponseEntity<LinkRolesResponse> linkRoles(@PathVariable long tenantId, @PathVariable long orgId,
+			@PathVariable long userId, List<Long> roleIds) {
 		User user = validateUser(tenantId, orgId, userId);
 		List<Role> roles = validateRoles(tenantId, orgId, roleIds);
 		for (Role r : roles) {
@@ -107,8 +107,8 @@ public class UserService {
 	}
 
 	@DeleteMapping(path = "{orgId}/users/{userId}/roles")
-	public ResponseEntity<LinkRolesResponse> unlinkRoles(@PathVariable String tenantId, @PathVariable String orgId,
-			@PathVariable String userId, List<String> roleIds) {
+	public ResponseEntity<LinkRolesResponse> unlinkRoles(@PathVariable long tenantId, @PathVariable long orgId,
+			@PathVariable long userId, List<Long> roleIds) {
 		User user = validateUser(tenantId, orgId, userId);
 		List<Role> roles = validateRoles(tenantId, orgId, roleIds);
 		for (Role r : roles) {
@@ -120,8 +120,8 @@ public class UserService {
 	}
 
 	@PutMapping(path = "{orgId}/users/{userId}/resources")
-	public ResponseEntity<LinkResourcesResponse> linkResources(@PathVariable String tenantId,
-			@PathVariable String orgId, @PathVariable String userId, List<String> resourceIds) {
+	public ResponseEntity<LinkResourcesResponse> linkResources(@PathVariable long tenantId,
+			@PathVariable long orgId, @PathVariable long userId, List<Long> resourceIds) {
 		User user = validateUser(tenantId, orgId, userId);
 		List<Resource> resources = validateResources(tenantId, orgId, resourceIds);
 		for (Resource r : resources) {
@@ -133,8 +133,8 @@ public class UserService {
 	}
 
 	@DeleteMapping(path = "{orgId}/users/{userId}/resources")
-	public ResponseEntity<UnLinkResourcesResponse> unLinkResources(@PathVariable String tenantId,
-			@PathVariable String orgId, @PathVariable String userId, List<String> resourceIds) {
+	public ResponseEntity<UnLinkResourcesResponse> unLinkResources(@PathVariable long tenantId,
+			@PathVariable long orgId, @PathVariable long userId, List<Long> resourceIds) {
 		User user = validateUser(tenantId, orgId, userId);
 		List<Resource> resources = validateResources(tenantId, orgId, resourceIds);
 		for (Resource r : resources) {
@@ -145,7 +145,7 @@ public class UserService {
 		return new ResponseEntity<>(new UnLinkResourcesResponse(userRepo.save(user)), HttpStatus.OK);
 	}
 
-	private Organization validateTenantOrganization(String tenantId, String orgId) {
+	private Organization validateTenantOrganization(long tenantId, long orgId) {
 		Organization org = orgRepo.findByTenantIdAndOrgId(tenantId, orgId);
 		if (org != null) {
 			return org;
@@ -155,7 +155,7 @@ public class UserService {
 		}
 	}
 
-	private User validateUser(String tenantId, String orgId, String userId) {
+	private User validateUser(long tenantId, long orgId, long userId) {
 		validateTenantOrganization(tenantId, orgId);
 		User user = userRepo.findByOrgIdAndUserId(orgId, userId);
 		if (user != null) {
@@ -165,10 +165,10 @@ public class UserService {
 		}
 	}
 
-	private List<Role> validateRoles(String tenantId, String orgId, List<String> roleIds) {
+	private List<Role> validateRoles(long tenantId, long orgId, List<Long> roleIds) {
 		validateTenantOrganization(tenantId, orgId);
 		List<Role> roles = new ArrayList<>();
-		for (String roleId : roleIds) {
+		for (Long roleId : roleIds) {
 			Role role = roleRepo.findByOrgIdAndRoleId(orgId, roleId);
 			if (role == null) {
 				throw new InvalidRoleIdException("Role does not exist: " + roleId);
@@ -178,10 +178,10 @@ public class UserService {
 		return roles;
 	}
 
-	private List<Resource> validateResources(String tenantId, String orgId, List<String> resourceIds) {
+	private List<Resource> validateResources(long tenantId, long orgId, List<Long> resourceIds) {
 		validateTenantOrganization(tenantId, orgId);
 		List<Resource> resources = new ArrayList<>();
-		for (String resourceId : resourceIds) {
+		for (Long resourceId : resourceIds) {
 			Resource resource = resourceRepo.findByOrgIdAndResourceId(orgId, resourceId);
 			if (resource == null) {
 				throw new InvalidResourceIdException("Resource does not exist: " + resourceId);

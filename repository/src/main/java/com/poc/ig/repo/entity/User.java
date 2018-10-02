@@ -33,7 +33,7 @@ public class User implements Serializable {
 	private static final long serialVersionUID = 1L;
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private String id;
+	private long id;
 	@Column(nullable=false, unique=true)
 	private String userName;
 	private String firstName;
@@ -41,13 +41,13 @@ public class User implements Serializable {
 	private String email;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "ORG_ID", nullable = false)
+	@JoinColumn(name = "org_id", nullable = false)
 	private Organization organization;
 	@ManyToMany(cascade=CascadeType.PERSIST)
-	@JoinTable(name="USER_ROLE", joinColumns=@JoinColumn(name="USER_ID"), inverseJoinColumns=@JoinColumn(name="ROLE_ID"))
+	@JoinTable(name="user_role", joinColumns=@JoinColumn(name="user_id"), inverseJoinColumns=@JoinColumn(name="role_id"))
 	private List<Role> roles = new ArrayList<>();
 	@ManyToMany(cascade=CascadeType.PERSIST)
-	@JoinTable(name="USER_RESOURCE", joinColumns=@JoinColumn(name="USER_ID"), inverseJoinColumns=@JoinColumn(name="ROSOURCE_ID"))
+	@JoinTable(name="user_resource", joinColumns=@JoinColumn(name="user_id"), inverseJoinColumns=@JoinColumn(name="resource_id"))
 	private List<Resource> resources = new ArrayList<>();
 
 }

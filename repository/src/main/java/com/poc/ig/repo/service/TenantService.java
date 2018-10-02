@@ -50,7 +50,7 @@ public class TenantService {
 	}
 
 	@GetMapping(path = "tenants/{tenantId}")
-	public ResponseEntity<GetTenantResponse> getTenant(@PathVariable String tenantId) {
+	public ResponseEntity<GetTenantResponse> getTenant(@PathVariable long tenantId) {
 		Tenant tenant = validateTenant(tenantId);
 		return new ResponseEntity<>(new GetTenantResponse(tenant), HttpStatus.OK);
 
@@ -70,19 +70,19 @@ public class TenantService {
 
 	@DeleteMapping(path = "tenants/{tenantId}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void deleteTenant(@PathVariable String tenantId) {
+	public void deleteTenant(@PathVariable long tenantId) {
 		tenantRepo.delete(validateTenant(tenantId));
 	}
 
 	@GetMapping(path = "tenants/{tenantId}/organizations")
 	@ResponseStatus(HttpStatus.OK)
-	public ListOrganizationsResponse listOrganizations(@PathVariable String tenantId) {
+	public ListOrganizationsResponse listOrganizations(@PathVariable long tenantId) {
 		validateTenant(tenantId);
 		return new ListOrganizationsResponse(orgRepo.findByTenantId(tenantId));
 	}
 
 	@PostMapping(path = "tenants/{tenantId}/organizations")
-	public ResponseEntity<CreateOrganizationResponse> addOrganization(@PathVariable String tenantId,
+	public ResponseEntity<CreateOrganizationResponse> addOrganization(@PathVariable long tenantId,
 			@RequestBody CreateOrganizationRequest createOrganizationReq) {
 		Tenant tenant = validateTenant(tenantId);
 		Organization org = createOrganizationReq.getOrganization();
@@ -92,20 +92,20 @@ public class TenantService {
 
 	@DeleteMapping(path = "tenants/{tenantId}/organizations/{orgId}")
 	@ResponseStatus(HttpStatus.OK)
-	public void removeOrganization(@PathVariable String tenantId, @PathVariable String orgId) {
+	public void removeOrganization(@PathVariable long tenantId, @PathVariable long orgId) {
 		Organization org = validateTenantOrganization(tenantId, orgId);
 		org.getTenant().getOrganizations().remove(org);
 		orgRepo.delete(org);
 	}
 
 	@GetMapping(path = "tenants/{tenantId}/organizations/{orgId}")
-	public ResponseEntity<OrganizationResponse> getOrganization(@PathVariable String tenantId,
-			@PathVariable String orgId) {
+	public ResponseEntity<OrganizationResponse> getOrganization(@PathVariable long tenantId,
+			@PathVariable long orgId) {
 		return new ResponseEntity<>(new OrganizationResponse(validateTenantOrganization(tenantId, orgId)),
 				HttpStatus.OK);
 	}
 
-	private Tenant validateTenant(String tenantId) {
+	private Tenant validateTenant(long tenantId) {
 		Optional<Tenant> tenant = tenantRepo.findById(tenantId);
 		if (tenant.isPresent()) {
 			return tenant.get(); 
@@ -114,7 +114,7 @@ public class TenantService {
 		}
 	}
 
-	private Organization validateTenantOrganization(String tenantId, String orgId) {
+	private Organization validateTenantOrganization(long tenantId, long orgId) {
 		Organization org = orgRepo.findByTenantIdAndOrgId(tenantId, orgId);
 		if (org != null) {
 			return org;

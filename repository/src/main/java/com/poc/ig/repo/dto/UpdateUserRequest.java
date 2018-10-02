@@ -16,7 +16,7 @@ import lombok.Setter;
 @Setter
 public class UpdateUserRequest implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private String id;
+	private long id;
 	private String userName;
 	private String firstName;
 	private String lastName;
@@ -39,7 +39,7 @@ public class UpdateUserRequest implements Serializable {
 	@Getter
 	@Setter
 	public static class Organization {
-		private String id;
+		private long id;
 		private String name;
 		private String description;
 	}
@@ -48,7 +48,7 @@ public class UpdateUserRequest implements Serializable {
 	@Getter
 	@Setter
 	public static class Role {
-		private String id;
+		private long id;
 		private String name;
 		private String description;
 	}
@@ -57,7 +57,7 @@ public class UpdateUserRequest implements Serializable {
 	@Getter
 	@Setter
 	public static class Resource {
-		private String id;
+		private long id;
 		private String name;
 		private String description;
 	}

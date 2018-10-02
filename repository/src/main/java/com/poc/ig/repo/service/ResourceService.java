@@ -41,7 +41,7 @@ public class ResourceService {
 
 	@PostMapping(path = "{orgId}/resources")
 	@ResponseStatus(HttpStatus.CREATED)
-	public CreateResourceResponse createResource(@PathVariable String tenantId, @PathVariable String orgId, @RequestBody CreateResourceRequest createResourceReq) {
+	public CreateResourceResponse createResource(@PathVariable long tenantId, @PathVariable long orgId, @RequestBody CreateResourceRequest createResourceReq) {
 		Organization org = validateTenantOrganization(tenantId, orgId);
 		Resource resource = createResourceReq.getResource();
 		resource.setOrganization(org);
@@ -49,20 +49,20 @@ public class ResourceService {
 	}
 
 	@GetMapping(path = "{orgId}/resources/{resourceId}")
-	public ResponseEntity<GetResourceResponse> getResource(@PathVariable String tenantId, @PathVariable String orgId, @PathVariable String resourceId) {
+	public ResponseEntity<GetResourceResponse> getResource(@PathVariable long tenantId, @PathVariable long orgId, @PathVariable long resourceId) {
 		Resource resource = validateResource(tenantId, orgId, resourceId);
 		return new ResponseEntity<>(new GetResourceResponse(resource), HttpStatus.OK);
 	}
 
 	@GetMapping(path = "{orgId}/resources")
 	@ResponseStatus(HttpStatus.OK)
-	public ListResourcesResponse listResources(@PathVariable String tenantId, @PathVariable String orgId) {
+	public ListResourcesResponse listResources(@PathVariable long tenantId, @PathVariable long orgId) {
 		Organization org = validateTenantOrganization(tenantId, orgId);
 		return new ListResourcesResponse(org.getResources());
 	}
 
 	@PutMapping(path = "{orgId}/resources")
-	public ResponseEntity<UpdateResourceResponse> updateResource(@PathVariable String tenantId, @PathVariable String orgId, @RequestBody UpdateResourceRequest updateResourceReq,
+	public ResponseEntity<UpdateResourceResponse> updateResource(@PathVariable long tenantId, @PathVariable long orgId, @RequestBody UpdateResourceRequest updateResourceReq,
 			@RequestParam boolean basicUpdate) {
 		Resource resource = validateResource(tenantId, orgId, updateResourceReq.getId());
 		resource = updateResourceReq.getUpdatedRole(resource, basicUpdate);
@@ -71,20 +71,20 @@ public class ResourceService {
 
 	@DeleteMapping(path = "{orgId}/resources/{resourceId}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void deleteResource(@PathVariable String tenantId, @PathVariable String orgId, @PathVariable String resourceId) {
+	public void deleteResource(@PathVariable long tenantId, @PathVariable long orgId, @PathVariable long resourceId) {
 		resourceRepo.delete(validateResource(tenantId, orgId, resourceId));
 	}
 
-	private Resource validateResource(String tenantId, String orgId, String resourceId) {
-		List<String> resourceIds = new ArrayList<>();
+	private Resource validateResource(long tenantId, long orgId, long resourceId) {
+		List<Long> resourceIds = new ArrayList<>();
 		resourceIds.add(resourceId);
 		return validateResources(tenantId, orgId, resourceIds).get(0);
 	}
 
-	private List<Resource> validateResources(String tenantId, String orgId, List<String> resourceIds) {
+	private List<Resource> validateResources(long tenantId, long orgId, List<Long> resourceIds) {
 		validateTenantOrganization(tenantId, orgId);
 		List<Resource> resources = new ArrayList<>();
-		for (String resourceId : resourceIds) {
+		for (long resourceId : resourceIds) {
 			Resource resource = resourceRepo.findByOrgIdAndResourceId(orgId, resourceId);
 			if (resource == null) {
 				throw new InvalidResourceIdException("Resource does not exist: " + resourceId);
@@ -94,7 +94,7 @@ public class ResourceService {
 		return resources;
 	}
 
-	private Organization validateTenantOrganization(String tenantId, String orgId) {
+	private Organization validateTenantOrganization(long tenantId, long orgId) {
 		Organization org = orgRepo.findByTenantIdAndOrgId(tenantId, orgId);
 		if (org != null) {
 			return org;

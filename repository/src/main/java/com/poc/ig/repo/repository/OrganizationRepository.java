@@ -8,15 +8,15 @@ import org.springframework.data.repository.query.Param;
 
 import com.poc.ig.repo.entity.Organization;
 
-public interface OrganizationRepository extends JpaRepository<Organization, String> {
+public interface OrganizationRepository extends JpaRepository<Organization, Long> {
 	
 	public List<Organization> findByNameContains(String orgName);
 	
 	@Query("select org from Organization org where org.tenant.id = :tenantId")
-	public List<Organization> findByTenantId(@Param("tenantId") String tenantId);
+	public List<Organization> findByTenantId(@Param("tenantId") long tenantId);
 	
 	@Query("select org from Organization org where org.tenant.id = :tenantId and org.id = :orgId")
-	public Organization findByTenantIdAndOrgId(@Param("tenantId") String tenantId, @Param("orgId") String orgId);
+	public Organization findByTenantIdAndOrgId(@Param("tenantId") long tenantId, @Param("orgId") long orgId);
 
 }
  

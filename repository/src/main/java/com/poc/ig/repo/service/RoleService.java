@@ -49,7 +49,7 @@ public class RoleService {
 
 	@PostMapping(path = "{orgId}/roles")
 	@ResponseStatus(HttpStatus.CREATED)
-	public CreateRoleResponse createRole(@PathVariable String tenantId, @PathVariable String orgId,
+	public CreateRoleResponse createRole(@PathVariable long tenantId, @PathVariable long orgId,
 			@RequestBody CreateRoleRequest createRoleReq) {
 		Organization org = validateTenantOrganization(tenantId, orgId);
 		Role role = createRoleReq.getRole();
@@ -58,21 +58,21 @@ public class RoleService {
 	}
 
 	@GetMapping(path = "{orgId}/roles/{roleId}")
-	public ResponseEntity<GetRoleResponse> getRole(@PathVariable String tenantId, @PathVariable String orgId,
-			@PathVariable String roleId) {
+	public ResponseEntity<GetRoleResponse> getRole(@PathVariable long tenantId, @PathVariable long orgId,
+			@PathVariable long roleId) {
 		Role role = validateRole(tenantId, orgId, roleId);
 		return new ResponseEntity<>(new GetRoleResponse(role), HttpStatus.OK);
 	}
 
 	@GetMapping(path = "{orgId}/roles")
 	@ResponseStatus(HttpStatus.OK)
-	public ListRolesResponse listRoles(@PathVariable String tenantId, @PathVariable String orgId) {
+	public ListRolesResponse listRoles(@PathVariable long tenantId, @PathVariable long orgId) {
 		Organization org = validateTenantOrganization(tenantId, orgId);
 		return new ListRolesResponse(org.getRoles());
 	}
 
 	@PutMapping(path = "{orgId}/roles")
-	public ResponseEntity<UpdateRoleResponse> updateRole(@PathVariable String tenantId, @PathVariable String orgId,
+	public ResponseEntity<UpdateRoleResponse> updateRole(@PathVariable long tenantId, @PathVariable long orgId,
 			@RequestBody UpdateRoleRequest updateRoleReq, @RequestParam boolean basicUpdate) {
 		Role role = validateRole(tenantId, orgId, updateRoleReq.getId());
 		role = updateRoleReq.getUpdatedRole(role, basicUpdate);
@@ -81,13 +81,13 @@ public class RoleService {
 
 	@DeleteMapping(path = "{orgId}/roles/{roleId}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void deleteRole(@PathVariable String tenantId, @PathVariable String orgId, @PathVariable String roleId) {
+	public void deleteRole(@PathVariable long tenantId, @PathVariable long orgId, @PathVariable long roleId) {
 		roleRepo.delete(validateRole(tenantId, orgId, roleId));
 	}
 
 	@PutMapping(path = "{orgId}/roles/{roleId}/resources")
-	public ResponseEntity<LinkRoleResourcesResponse> linkRoleResources(@PathVariable String tenantId,
-			@PathVariable String orgId, @PathVariable String roleId, List<String> resourceIds) {
+	public ResponseEntity<LinkRoleResourcesResponse> linkRoleResources(@PathVariable long tenantId,
+			@PathVariable long orgId, @PathVariable long roleId, List<Long> resourceIds) {
 		Role role = validateRole(tenantId, orgId, roleId);
 		List<Resource> resources = validateResources(tenantId, orgId, resourceIds);
 		for (Resource r : resources) {
@@ -99,8 +99,8 @@ public class RoleService {
 	}
 	
 	@DeleteMapping(path = "{orgId}/roles/{roleId}/resources")
-	public ResponseEntity<UnlinkRoleResourcesResponse> unlinkRoleResources(@PathVariable String tenantId,
-			@PathVariable String orgId, @PathVariable String roleId, List<String> resourceIds) {
+	public ResponseEntity<UnlinkRoleResourcesResponse> unlinkRoleResources(@PathVariable long tenantId,
+			@PathVariable long orgId, @PathVariable long roleId, List<Long> resourceIds) {
 		Role role = validateRole(tenantId, orgId, roleId);
 		List<Resource> resources = validateResources(tenantId, orgId, resourceIds);
 		for (Resource r : resources) {
@@ -111,10 +111,10 @@ public class RoleService {
 		return new ResponseEntity<>(new UnlinkRoleResourcesResponse(roleRepo.save(role)), HttpStatus.OK);
 	}
 	
-	private List<Resource> validateResources(String tenantId, String orgId, List<String> resourceIds) {
+	private List<Resource> validateResources(long tenantId, long orgId, List<Long> resourceIds) {
 		validateTenantOrganization(tenantId, orgId);
 		List<Resource> resources = new ArrayList<>();
-		for (String resourceId : resourceIds) {
+		for (long resourceId : resourceIds) {
 			Resource resource = resourceRepo.findByOrgIdAndResourceId(orgId, resourceId);
 			if (resource == null) {
 				throw new InvalidResourceIdException("Resource does not exist: " + resourceId);
@@ -126,17 +126,17 @@ public class RoleService {
 	
 	
 	
-	private Role validateRole(String tenantId, String orgId, String roleId) {
-		List<String> roleIds = new ArrayList<>();
+	private Role validateRole(long tenantId, long orgId, long roleId) {
+		List<Long> roleIds = new ArrayList<>();
 		roleIds.add(roleId);
 		List<Role> roles = validateRoles(tenantId, orgId, roleIds);
 		return roles.get(0);
 	}
 
-	private List<Role> validateRoles(String tenantId, String orgId, List<String> roleIds) {
+	private List<Role> validateRoles(long tenantId, long orgId, List<Long> roleIds) {
 		validateTenantOrganization(tenantId, orgId);
 		List<Role> roles = new ArrayList<>();
-		for (String roleId : roleIds) {
+		for (long roleId : roleIds) {
 			Role role = roleRepo.findByOrgIdAndRoleId(orgId, roleId);
 			if (role == null) {
 				throw new InvalidRoleIdException("Role does not exist: " + roleId);
@@ -146,7 +146,7 @@ public class RoleService {
 		return roles;
 	}
 
-	private Organization validateTenantOrganization(String tenantId, String orgId) {
+	private Organization validateTenantOrganization(long tenantId, long orgId) {
 		Organization org = orgRepo.findByTenantIdAndOrgId(tenantId, orgId);
 		if (org != null) {
 			return org;

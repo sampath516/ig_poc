@@ -4,13 +4,19 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestTemplate;
 
 import com.poc.ig.repo.test.dto.Organization;
@@ -18,16 +24,26 @@ import com.poc.ig.repo.test.dto.OrganizationList;
 import com.poc.ig.repo.test.dto.Tenant;
 import com.poc.ig.repo.test.dto.TenantsList;
 
-//@RunWith(SpringRunner.class)
-//@SpringBootTest
+@RunWith(SpringRunner.class)
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 public class TenantServiceTest {
 
 	private RestTemplate restClient = new RestTemplate();
-	private static final String TENANT_BASE_URI = "http://localhost:8080/ig/repo/v1/tenants";
+	private static String TENANT_BASE_URI = "http://localhost:%d/ig/repo/v1/tenants";
+	private String tenantBaseUri;
 
-//	@Test
+	@Before
+	public void init() {
+		tenantBaseUri = String.format(TENANT_BASE_URI, port);
+	}
+
+	@LocalServerPort
+	private int port;
+
+	@Test
 	public void testTenantCRUDOperations() {
 
+		tenantBaseUri = String.format(tenantBaseUri, port);
 		Tenant createTenant = createTenant("abc", "ABC Company");
 
 		Tenant getTenant = getTenant(createTenant.getId());
@@ -38,61 +54,61 @@ public class TenantServiceTest {
 		Tenant updateTenant = updateTenant(getTenant);
 		Assert.assertEquals(getTenant.getName(), updateTenant.getName());
 		Assert.assertEquals(getTenant.getDescription(), updateTenant.getDescription());
-		
+
 		createTenant("MNO", "MNO Company");
-		
-		List<Tenant> tenants = listTenants();		
+
+		List<Tenant> tenants = listTenants();
 		Assert.assertEquals(2, tenants.size());
 		Assert.assertEquals("XYZ", tenants.get(0).getName());
 		Assert.assertEquals("MNO", tenants.get(1).getName());
-		
+
 		deleteTenant(tenants.get(0).getId());
 		deleteTenant(tenants.get(1).getId());
-		
-		tenants = listTenants();	
+
+		tenants = listTenants();
 		Assert.assertEquals(0, tenants.size());
-		
+
 		System.out.println("success");
 	}
-//	@Test
+
+	@Test
 	public void testAddAndRemoveOrganizations() {
-		
+
 		Tenant abcTenant = createTenant("ABC", "ABC Company");
 		Tenant xyzTenant = createTenant("XYZ", "XYZ Company");
 		Organization org1 = new Organization("ABC_ORG1", "ABC Organization One");
-		org1 =addOrganization(abcTenant.getId(), org1);
-		
+		org1 = addOrganization(abcTenant.getId(), org1);
+
 		Organization org2 = new Organization("ABC_ORG2", "ABC Organization Two");
 		org2 = addOrganization(abcTenant.getId(), org2);
-		
+
 		List<Organization> organizations = listOrganizations(abcTenant.getId());
-		Assert.assertEquals(2, organizations.size());		
+		Assert.assertEquals(2, organizations.size());
 		Assert.assertEquals("ABC_ORG1", organizations.get(0).getName());
-		
+
 		removeOrganization(abcTenant.getId(), organizations.get(0).getId());
-		
+
 		organizations = listOrganizations(abcTenant.getId());
-        Assert.assertEquals(1, organizations.size());
-		
+		Assert.assertEquals(1, organizations.size());
+
 		Assert.assertEquals("ABC_ORG2", organizations.get(0).getName());
-		
+
 		deleteTenant(abcTenant.getId());
 		deleteTenant(xyzTenant.getId());
-		
-		
+
 	}
 
 	private Tenant createTenant(String tenantName, String tenantDesc) {
 		Tenant tenantIn = new Tenant(tenantName, tenantDesc);
-		ResponseEntity<Tenant> createTenant = restClient.postForEntity(TENANT_BASE_URI, tenantIn, Tenant.class);
+		ResponseEntity<Tenant> createTenant = restClient.postForEntity(tenantBaseUri, tenantIn, Tenant.class);
 		Assert.assertEquals(HttpStatus.CREATED, createTenant.getStatusCode());
 		Assert.assertTrue(createTenant.hasBody());
 		Assert.assertNotNull(createTenant.getBody().getId());
 		return createTenant.getBody();
 	}
 
-	private Tenant getTenant(String tenantId) {
-		String uri = new StringBuilder(TENANT_BASE_URI).append("/").append(tenantId).toString();
+	private Tenant getTenant(long tenantId) {
+		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantId).toString();
 		HttpHeaders headers = new HttpHeaders();
 		headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
 		headers.setContentType(MediaType.APPLICATION_JSON);
@@ -105,7 +121,7 @@ public class TenantServiceTest {
 	}
 
 	private Tenant updateTenant(Tenant tenant) {
-		ResponseEntity<Tenant> updateEntityTenant = restClient.exchange(TENANT_BASE_URI, HttpMethod.PUT,
+		ResponseEntity<Tenant> updateEntityTenant = restClient.exchange(tenantBaseUri, HttpMethod.PUT,
 				new HttpEntity<>(tenant), Tenant.class);
 		Assert.assertEquals(HttpStatus.OK, updateEntityTenant.getStatusCode());
 		Assert.assertTrue(updateEntityTenant.hasBody());
@@ -115,46 +131,50 @@ public class TenantServiceTest {
 
 	private List<Tenant> listTenants() {
 		HttpEntity<Tenant> tenantReq = new HttpEntity<Tenant>(getHeaders());
-		ResponseEntity<TenantsList> tenants = restClient.exchange(TENANT_BASE_URI, HttpMethod.GET, tenantReq, TenantsList.class);
+		ResponseEntity<TenantsList> tenants = restClient.exchange(tenantBaseUri, HttpMethod.GET, tenantReq,
+				TenantsList.class);
 		Assert.assertEquals(HttpStatus.OK, tenants.getStatusCode());
 		Assert.assertTrue(tenants.hasBody());
 		Assert.assertNotNull(tenants.getBody());
 		return tenants.getBody().getTenants();
 	}
-	
-	private void deleteTenant(String tenantId) {
-		String uri = new StringBuilder(TENANT_BASE_URI).append("/").append(tenantId).toString();
+
+	private void deleteTenant(long tenantId) {
+		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantId).toString();
 		HttpEntity<Tenant> deleteTenantReq = new HttpEntity<Tenant>(getHeaders());
 		restClient.exchange(uri, HttpMethod.DELETE, deleteTenantReq, Tenant.class);
 	}
-	
-	private Organization addOrganization(String tenantId, Organization org) {
-		String uri = new StringBuilder(TENANT_BASE_URI).append("/").append(tenantId).append("/organizations").toString();
+
+	private Organization addOrganization(long tenantId, Organization org) {
+		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantId).append("/organizations")
+				.toString();
 		HttpEntity<Organization> orgReq = new HttpEntity<Organization>(org, getHeaders());
 		ResponseEntity<Organization> orgOut = restClient.exchange(uri, HttpMethod.POST, orgReq, Organization.class);
 		Assert.assertEquals(HttpStatus.CREATED, orgOut.getStatusCode());
 		Assert.assertTrue(orgOut.hasBody());
 		Assert.assertNotNull(orgOut.getBody());
 		Assert.assertNotNull(orgOut.getBody().getId());
-		return orgOut.getBody();		
+		return orgOut.getBody();
 	}
-	
-	private void removeOrganization(String tenantId, String orgId) {
-		String uri = new StringBuilder(TENANT_BASE_URI).append("/").append(tenantId).append("/organizations/").append(orgId).toString();
+
+	private void removeOrganization(long tenantId, long orgId) {
+		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantId).append("/organizations/")
+				.append(orgId).toString();
 		HttpEntity<Organization> deleteReq = new HttpEntity<Organization>(getHeaders());
 		restClient.exchange(uri, HttpMethod.DELETE, deleteReq, Organization.class);
-	}	
-	
-	private List<Organization> listOrganizations(String tenantId) {
-		String uri = new StringBuilder(TENANT_BASE_URI).append("/").append(tenantId).append("/organizations").toString();
+	}
+
+	private List<Organization> listOrganizations(long tenantId) {
+		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantId).append("/organizations")
+				.toString();
 		HttpEntity<Organization> listTenantsReq = new HttpEntity<Organization>(getHeaders());
-		ResponseEntity<OrganizationList> organizations = restClient.exchange(uri, HttpMethod.GET, listTenantsReq, OrganizationList.class);
+		ResponseEntity<OrganizationList> organizations = restClient.exchange(uri, HttpMethod.GET, listTenantsReq,
+				OrganizationList.class);
 		Assert.assertEquals(HttpStatus.OK, organizations.getStatusCode());
 		Assert.assertTrue(organizations.hasBody());
 		Assert.assertNotNull(organizations.getBody());
 		return organizations.getBody().getOrganizations();
 	}
-	
 
 	private HttpHeaders getHeaders() {
 		HttpHeaders headers = new HttpHeaders();
