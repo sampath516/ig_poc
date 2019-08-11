@@ -1,6 +1,7 @@
 package com.poc.ig.repo.dto;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +25,9 @@ public class ListOrganizationsResponse implements Serializable {
 			orgDto.setName(org.getName());
 			orgDto.setDescription(org.getDescription());
 			orgDto.setTenantId(org.getTenant().getId());
+			orgDto.setExternalId(org.getExternalId());
+			orgDto.setCreatedAt(org.getCreatedAt());
+			orgDto.setUpdatedAt(org.getUpdatedAt());
 			organizations.add(orgDto);
 		}
 	}
@@ -34,8 +38,11 @@ public class ListOrganizationsResponse implements Serializable {
 	public static class OrganizationDto implements Serializable {
 		private static final long serialVersionUID = 1L;
 		private long id;
+		private String externalId;
 		private String name;
 		private String description;
+		private LocalDateTime createdAt;
+		private LocalDateTime updatedAt;
 		private long tenantId;
 	}
 

@@ -11,7 +11,8 @@
 
 	<name>repository</name>
 	<description>POC IG Repository</description>
-
+	
+	<!-- Tells Maven to include the Spring Boot Starter Kit dependencies  -->
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
@@ -94,6 +95,7 @@
 
 	<build>
 		<plugins>
+		<!-- Tells Maven to include Spring specific maven plugins for building and deploying Spring Boot applications -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>

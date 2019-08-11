@@ -44,13 +44,12 @@ public class TenantServiceTest {
 	public void testTenantCRUDOperations() {
 
 		tenantBaseUri = String.format(tenantBaseUri, port);
-		Tenant createTenant = createTenant("abc", "ABC Company");
+		Tenant createTenant = createTenant("ABC", "ABC Company");
 
-		Tenant getTenant = getTenant(createTenant.getId());
+		Tenant getTenant = getTenant(createTenant.getName());
 		Assert.assertEquals(createTenant.getName(), getTenant.getName());
 
-		getTenant.setName("XYZ");
-		getTenant.setDescription("XYZ Company");
+		getTenant.setDescription("ABC Company Updated");
 		Tenant updateTenant = updateTenant(getTenant);
 		Assert.assertEquals(getTenant.getName(), updateTenant.getName());
 		Assert.assertEquals(getTenant.getDescription(), updateTenant.getDescription());
@@ -59,42 +58,45 @@ public class TenantServiceTest {
 
 		List<Tenant> tenants = listTenants();
 		Assert.assertEquals(2, tenants.size());
-		Assert.assertEquals("XYZ", tenants.get(0).getName());
-		Assert.assertEquals("MNO", tenants.get(1).getName());
+		Assert.assertFalse(tenants.get(0).getName().equals(tenants.get(1).getName()));
 
-		deleteTenant(tenants.get(0).getId());
-		deleteTenant(tenants.get(1).getId());
+		deleteTenant(tenants.get(0).getName());
+		deleteTenant(tenants.get(1).getName());
 
 		tenants = listTenants();
 		Assert.assertEquals(0, tenants.size());
 
-		System.out.println("success");
 	}
 
 	@Test
 	public void testAddAndRemoveOrganizations() {
 
-		Tenant abcTenant = createTenant("ABC", "ABC Company");
-		Tenant xyzTenant = createTenant("XYZ", "XYZ Company");
-		Organization org1 = new Organization("ABC_ORG1", "ABC Organization One");
-		org1 = addOrganization(abcTenant.getId(), org1);
+		Tenant abcTenant = createTenant("XYZ", "XYZ Company");
+		Organization org1 = new Organization("XYZ_ORG1_KEY","XYZ_ORG1", "XYZ Organization One");
+		org1 = createOrganization(abcTenant.getName(), org1);
 
-		Organization org2 = new Organization("ABC_ORG2", "ABC Organization Two");
-		org2 = addOrganization(abcTenant.getId(), org2);
-
-		List<Organization> organizations = listOrganizations(abcTenant.getId());
-		Assert.assertEquals(2, organizations.size());
-		Assert.assertEquals("ABC_ORG1", organizations.get(0).getName());
-
-		removeOrganization(abcTenant.getId(), organizations.get(0).getId());
-
-		organizations = listOrganizations(abcTenant.getId());
+		
+		List<Organization> organizations = listOrganizations(abcTenant.getName());
 		Assert.assertEquals(1, organizations.size());
+		Assert.assertEquals("XYZ_ORG1_KEY", organizations.get(0).getExternalId());
+		Assert.assertEquals("XYZ_ORG1", organizations.get(0).getName());
+		Assert.assertEquals("XYZ Organization One", organizations.get(0).getDescription());	
+		Assert.assertNotNull(organizations.get(0).getCreatedAt());
+		Assert.assertNotNull(organizations.get(0).getUpdatedAt());
+		
+		
+		
+		Organization org2 = new Organization("XYZ_ORG2_KEY", "XYZ_ORG2", "XYZ Organization Two");
+		org2 = createOrganization(abcTenant.getName(), org2);
+		organizations = listOrganizations(abcTenant.getName());
+		Assert.assertEquals(2, organizations.size());
 
-		Assert.assertEquals("ABC_ORG2", organizations.get(0).getName());
+		deleteOrganization(abcTenant.getName(), organizations.get(0).getExternalId());
 
-		deleteTenant(abcTenant.getId());
-		deleteTenant(xyzTenant.getId());
+		organizations = listOrganizations(abcTenant.getName());
+		Assert.assertEquals(1, organizations.size());
+		deleteTenant(abcTenant.getName());
+
 
 	}
 
@@ -107,8 +109,8 @@ public class TenantServiceTest {
 		return createTenant.getBody();
 	}
 
-	private Tenant getTenant(long tenantId) {
-		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantId).toString();
+	private Tenant getTenant(String tenantName) {
+		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantName).toString();
 		HttpHeaders headers = new HttpHeaders();
 		headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
 		headers.setContentType(MediaType.APPLICATION_JSON);
@@ -121,8 +123,8 @@ public class TenantServiceTest {
 	}
 
 	private Tenant updateTenant(Tenant tenant) {
-		ResponseEntity<Tenant> updateEntityTenant = restClient.exchange(tenantBaseUri, HttpMethod.PUT,
-				new HttpEntity<>(tenant), Tenant.class);
+		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenant.getName()).toString();
+		ResponseEntity<Tenant> updateEntityTenant = restClient.exchange(uri, HttpMethod.PUT, new HttpEntity<>(tenant), Tenant.class);
 		Assert.assertEquals(HttpStatus.OK, updateEntityTenant.getStatusCode());
 		Assert.assertTrue(updateEntityTenant.hasBody());
 		Assert.assertNotNull(updateEntityTenant.getBody());
@@ -139,15 +141,14 @@ public class TenantServiceTest {
 		return tenants.getBody().getTenants();
 	}
 
-	private void deleteTenant(long tenantId) {
-		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantId).toString();
+	private void deleteTenant(String tenantName) {
+		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantName).toString();
 		HttpEntity<Tenant> deleteTenantReq = new HttpEntity<Tenant>(getHeaders());
 		restClient.exchange(uri, HttpMethod.DELETE, deleteTenantReq, Tenant.class);
 	}
 
-	private Organization addOrganization(long tenantId, Organization org) {
-		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantId).append("/organizations")
-				.toString();
+	private Organization createOrganization(String tenantName, Organization org) {
+		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantName).append("/organizations").toString();
 		HttpEntity<Organization> orgReq = new HttpEntity<Organization>(org, getHeaders());
 		ResponseEntity<Organization> orgOut = restClient.exchange(uri, HttpMethod.POST, orgReq, Organization.class);
 		Assert.assertEquals(HttpStatus.CREATED, orgOut.getStatusCode());
@@ -157,19 +158,16 @@ public class TenantServiceTest {
 		return orgOut.getBody();
 	}
 
-	private void removeOrganization(long tenantId, long orgId) {
-		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantId).append("/organizations/")
-				.append(orgId).toString();
+	private void deleteOrganization(String tenantName, String orgExternalId) {
+		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantName).append("/organizations/").append(orgExternalId).toString();
 		HttpEntity<Organization> deleteReq = new HttpEntity<Organization>(getHeaders());
 		restClient.exchange(uri, HttpMethod.DELETE, deleteReq, Organization.class);
 	}
 
-	private List<Organization> listOrganizations(long tenantId) {
-		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantId).append("/organizations")
-				.toString();
+	private List<Organization> listOrganizations(String tenantName) {
+		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantName).append("/organizations").toString();
 		HttpEntity<Organization> listTenantsReq = new HttpEntity<Organization>(getHeaders());
-		ResponseEntity<OrganizationList> organizations = restClient.exchange(uri, HttpMethod.GET, listTenantsReq,
-				OrganizationList.class);
+		ResponseEntity<OrganizationList> organizations = restClient.exchange(uri, HttpMethod.GET, listTenantsReq, OrganizationList.class);
 		Assert.assertEquals(HttpStatus.OK, organizations.getStatusCode());
 		Assert.assertTrue(organizations.hasBody());
 		Assert.assertNotNull(organizations.getBody());

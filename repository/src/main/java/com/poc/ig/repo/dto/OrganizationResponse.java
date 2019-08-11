@@ -1,6 +1,7 @@
 package com.poc.ig.repo.dto;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 import com.poc.ig.repo.entity.Organization;
 
@@ -15,27 +16,22 @@ public class OrganizationResponse implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private long id;
+	private String externalId;
 	private String name;
 	private String description;
-	private Tenant tenant;
+	private String tenantName;
+	private LocalDateTime createdAt;
+	private LocalDateTime updatedAt;
 
 	public OrganizationResponse(Organization org) {
 		this.id = org.getId();
 		this.name = org.getName();
 		this.description = org.getDescription();
-		this.tenant = new Tenant();
-		tenant.setId(org.getTenant().getId());
-		tenant.setName(org.getTenant().getName());
-		tenant.setDescription(org.getTenant().getDescription());
+		this.externalId = org.getExternalId();
+		this.tenantName = org.getTenant().getName();
+		this.createdAt = org.getCreatedAt();
+		this.updatedAt = org.getUpdatedAt();
+
 	}
 
-	@Data
-	@Getter
-	@Setter
-	public static class Tenant implements Serializable {
-		private static final long serialVersionUID = 1L;
-		private long id;
-		private String name;
-		private String description;
-	}
 }

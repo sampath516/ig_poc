@@ -2,6 +2,7 @@ package com.poc.ig.repo.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,94 +14,119 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.poc.ig.repo.dto.CreateResourceRequest;
 import com.poc.ig.repo.dto.CreateResourceResponse;
+import com.poc.ig.repo.dto.DeleteResourcesRequest;
 import com.poc.ig.repo.dto.GetResourceResponse;
 import com.poc.ig.repo.dto.ListResourcesResponse;
+import com.poc.ig.repo.dto.ResourceRequest;
 import com.poc.ig.repo.dto.UpdateResourceRequest;
 import com.poc.ig.repo.dto.UpdateResourceResponse;
-import com.poc.ig.repo.entity.Organization;
+import com.poc.ig.repo.entity.Application;
 import com.poc.ig.repo.entity.Resource;
-import com.poc.ig.repo.exception.InvalidOrganizationIdException;
-import com.poc.ig.repo.exception.InvalidResourceIdException;
-import com.poc.ig.repo.repository.OrganizationRepository;
+import com.poc.ig.repo.entity.Tenant;
+import com.poc.ig.repo.exception.InvalidApplicationException;
+import com.poc.ig.repo.exception.InvalidResourceException;
+import com.poc.ig.repo.exception.InvalidTenantException;
+import com.poc.ig.repo.repository.ApplicationRepository;
 import com.poc.ig.repo.repository.ResourceRepository;
+import com.poc.ig.repo.repository.TenantRepository;
 
 @RestController
-@RequestMapping(value = "ig/repo/v1/{tenantId}/", produces = "application/json", consumes = "application/json")
+@RequestMapping(value = "ig/repo/v1/tenants/{tenantName}/", produces = "application/json", consumes = "application/json")
 public class ResourceService {
 	@Autowired
-	private OrganizationRepository orgRepo;
-
-	@Autowired
 	private ResourceRepository resourceRepo;
+	
+	@Autowired
+	private ApplicationRepository appRepo;
+	
+	@Autowired
+	private TenantRepository tenantRepo;
 
-	@PostMapping(path = "{orgId}/resources")
+	@PostMapping(path = "resources")
 	@ResponseStatus(HttpStatus.CREATED)
-	public CreateResourceResponse createResource(@PathVariable long tenantId, @PathVariable long orgId, @RequestBody CreateResourceRequest createResourceReq) {
-		Organization org = validateTenantOrganization(tenantId, orgId);
-		Resource resource = createResourceReq.getResource();
-		resource.setOrganization(org);
-		return new CreateResourceResponse(resourceRepo.save(resource));
+	public CreateResourceResponse createResource(@PathVariable String tenantName, @RequestBody CreateResourceRequest createResourceReq) {	
+		List<ResourceRequest> resourcesIn = createResourceReq.getResources();
+		List<Resource> resourceEntities = new ArrayList<Resource>();
+		for(ResourceRequest resIn : resourcesIn) {
+			Application app = validateApplication(tenantName, resIn.getApplication());			
+			Resource resource = new Resource();
+			resource.setExternalId(resIn.getExternalId());
+			resource.setApplication(app);
+			resource.setName(resIn.getName());
+			resource.setDescription(resIn.getDescription());
+			resource.setTenant(app.getTenant());
+			resource = resourceRepo.save(resource);
+			resourceEntities.add(resource);
+		}		
+
+		return new CreateResourceResponse(resourceEntities);
 	}
 
-	@GetMapping(path = "{orgId}/resources/{resourceId}")
-	public ResponseEntity<GetResourceResponse> getResource(@PathVariable long tenantId, @PathVariable long orgId, @PathVariable long resourceId) {
-		Resource resource = validateResource(tenantId, orgId, resourceId);
+	@GetMapping(path = "resources/{resourceExternalId}")
+	public ResponseEntity<GetResourceResponse> getResource(@PathVariable String tenantName,@PathVariable String resourceExternalId) {
+		Resource resource = validateResource(tenantName, resourceExternalId);
 		return new ResponseEntity<>(new GetResourceResponse(resource), HttpStatus.OK);
 	}
 
-	@GetMapping(path = "{orgId}/resources")
+	@GetMapping(path = "resources")
 	@ResponseStatus(HttpStatus.OK)
-	public ListResourcesResponse listResources(@PathVariable long tenantId, @PathVariable long orgId) {
-		Organization org = validateTenantOrganization(tenantId, orgId);
-		return new ListResourcesResponse(org.getResources());
+	public ListResourcesResponse listResources(@PathVariable String tenantName) {
+		validateTenant(tenantName);
+		return new ListResourcesResponse(resourceRepo.findByTenantName(tenantName));
 	}
 
-	@PutMapping(path = "{orgId}/resources")
-	public ResponseEntity<UpdateResourceResponse> updateResource(@PathVariable long tenantId, @PathVariable long orgId, @RequestBody UpdateResourceRequest updateResourceReq,
-			@RequestParam boolean basicUpdate) {
-		Resource resource = validateResource(tenantId, orgId, updateResourceReq.getId());
-		resource = updateResourceReq.getUpdatedRole(resource, basicUpdate);
+	@PutMapping(path = "resources/{resourceExternalId}")
+	public ResponseEntity<UpdateResourceResponse> updateResource(@PathVariable String tenantName, @PathVariable String resourceExternalId, @RequestBody UpdateResourceRequest updateResourceReq) {
+		Resource resource = validateResource(tenantName, resourceExternalId);
+		resource.setName(updateResourceReq.getName());
+		resource.setDescription(updateResourceReq.getDescription());
 		return new ResponseEntity<>(new UpdateResourceResponse(resourceRepo.save(resource)), HttpStatus.OK);
 	}
 
-	@DeleteMapping(path = "{orgId}/resources/{resourceId}")
+	@DeleteMapping(path = "resources/{resourceExternalId}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void deleteResource(@PathVariable long tenantId, @PathVariable long orgId, @PathVariable long resourceId) {
-		resourceRepo.delete(validateResource(tenantId, orgId, resourceId));
+	public void deleteResource(@PathVariable String tenantName, @PathVariable String resourceExternalId) {
+		resourceRepo.delete(validateResource(tenantName, resourceExternalId));
+	}
+	
+	@DeleteMapping(path = "resources")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void deleteResources(@PathVariable String tenantName, @RequestBody DeleteResourcesRequest deleteResourcesReq) {
+		for(String resExtId: deleteResourcesReq.getResources()) {
+			resourceRepo.delete(validateResource(tenantName, resExtId));
+		}		
 	}
 
-	private Resource validateResource(long tenantId, long orgId, long resourceId) {
-		List<Long> resourceIds = new ArrayList<>();
-		resourceIds.add(resourceId);
-		return validateResources(tenantId, orgId, resourceIds).get(0);
-	}
-
-	private List<Resource> validateResources(long tenantId, long orgId, List<Long> resourceIds) {
-		validateTenantOrganization(tenantId, orgId);
-		List<Resource> resources = new ArrayList<>();
-		for (long resourceId : resourceIds) {
-			Resource resource = resourceRepo.findByOrgIdAndResourceId(orgId, resourceId);
-			if (resource == null) {
-				throw new InvalidResourceIdException("Resource does not exist: " + resourceId);
-			}
-			resources.add(resource);
-		}
-		return resources;
-	}
-
-	private Organization validateTenantOrganization(long tenantId, long orgId) {
-		Organization org = orgRepo.findByTenantIdAndOrgId(tenantId, orgId);
-		if (org != null) {
-			return org;
+	private Resource validateResource(String tenantName, String resourceExternalId) {
+		Optional<Resource> resource = resourceRepo.findByTenantNameAndResourceExternalId(tenantName, resourceExternalId);
+		if (resource.isPresent()) {
+			return resource.get(); 
 		} else {
-			throw new InvalidOrganizationIdException(
-					"Organization Id, " + orgId + ", does not belong to the tenant Id " + tenantId);
+			throw new InvalidResourceException("Invalid Resource(" + tenantName+", "+resourceExternalId+")");
 		}
+	}
+	
+	private Application validateApplication(String tenantName, String appExternalId) {
+		Optional<Application> app = appRepo.findByTenantNameAndAppExternalId(tenantName, appExternalId);
+		if (app.isPresent()) {
+			return app.get(); 
+		} else {
+			throw new InvalidApplicationException("Invalid Application(" + tenantName+", "+appExternalId+")");
+		}
+		
+	}
+	private Tenant validateTenant(String tenantName) {
+		Optional<Tenant> tenant = tenantRepo.findByName(tenantName);
+		if (tenant.isPresent()) {
+			return tenant.get(); 
+		} else {
+			throw new InvalidTenantException("Invalid Tenant: " + tenantName);
+		}
+		
 	}
 }

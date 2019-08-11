@@ -1,6 +1,7 @@
 package com.poc.ig.repo.dto;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 import com.poc.ig.repo.entity.Tenant;
 
@@ -17,6 +18,8 @@ public class GetTenantResponse implements Serializable {
 	private long id;
 	private String name;
 	private String description;
+	private LocalDateTime createdAt;
+	private LocalDateTime updatedAt;
 
 	public GetTenantResponse() {
 		super();
@@ -26,6 +29,8 @@ public class GetTenantResponse implements Serializable {
 		this.id = tenant.getId();
 		this.name = tenant.getName();
 		this.description = tenant.getDescription();
+		this.createdAt = tenant.getCreatedAt();
+		this.updatedAt = tenant.getUpdatedAt();
 	}
 
 }

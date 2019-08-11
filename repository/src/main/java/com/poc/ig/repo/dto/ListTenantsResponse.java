@@ -1,6 +1,7 @@
 package com.poc.ig.repo.dto;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +23,8 @@ public class ListTenantsResponse implements Serializable {
 			tenantDto.setId(tenant.getId());
 			tenantDto.setName(tenant.getName());
 			tenantDto.setDescription(tenant.getDescription());
+			tenantDto.setCreatedAt(tenant.getCreatedAt());
+			tenantDto.setUpdatedAt(tenant.getUpdatedAt());
 			tenants.add(tenantDto);
 		}
 	}
@@ -34,6 +37,9 @@ public class ListTenantsResponse implements Serializable {
 		private long id;
 		private String name;
 		private String description;
+		private LocalDateTime createdAt;
+		private LocalDateTime updatedAt;
+		
 	}
 
 }

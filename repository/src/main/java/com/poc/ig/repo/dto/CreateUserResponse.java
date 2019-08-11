@@ -1,6 +1,8 @@
 package com.poc.ig.repo.dto;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.poc.ig.repo.entity.User;
 
@@ -14,10 +16,12 @@ import lombok.Setter;
 public class CreateUserResponse implements Serializable {
 	private static final long serialVersionUID = 1L;
 
-	private UserResponse user;
+	private List<UserResponse> users = new ArrayList<UserResponse>();
 
-	public CreateUserResponse(User user) {
-		this.user = new UserResponse(user);
+	public CreateUserResponse(List<User> userEntities) {
+		for (User u : userEntities) {
+			users.add(new UserResponse(u));
+		}
 	}
 
 }

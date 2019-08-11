@@ -1,6 +1,8 @@
 package com.poc.ig.repo.dto;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.poc.ig.repo.entity.Resource;
 
@@ -13,10 +15,11 @@ import lombok.Setter;
 @Setter
 public class CreateResourceResponse implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private ResourceResponse resource;
+	private List<ResourceResponse> resources = new ArrayList<ResourceResponse>();
 
-	public CreateResourceResponse(Resource resourceEntitiy) {
-		this.resource = new ResourceResponse(resourceEntitiy);
+	public CreateResourceResponse(List<Resource> resourceEntities) {
+		for (Resource res : resourceEntities) {
+			resources.add(new ResourceResponse(res));
+		}
 	}
-
 }

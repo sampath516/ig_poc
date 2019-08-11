@@ -16,13 +16,11 @@ public class CreateTenantRequest implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	private long id;
 	private String name;
 	private String description;
 	@JsonIgnore
 	public Tenant tenant() { 
 		Tenant tenant = new Tenant();
-		tenant.setId(id);
 		tenant.setName(name);
 		tenant.setDescription(description);
 		return tenant;
