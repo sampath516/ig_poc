@@ -16,6 +16,7 @@ import org.springframework.web.client.RestTemplate;
 import com.poc.ig.repo.test.dto.Application;
 import com.poc.ig.repo.test.dto.Organization;
 import com.poc.ig.repo.test.dto.Resource;
+import com.poc.ig.repo.test.dto.Role;
 import com.poc.ig.repo.test.dto.User;
 import com.poc.ig.repoutil.RepoTestUtil;
 
@@ -78,7 +79,8 @@ public class RepositoryServicesTest {
 
 		
 		//Create Roles
-		
+		List<Role> roles = RepoTestUtil.createRoles(tenant1, org1.getExternalId(), users.get(2).getExternalId(), 1, 100);
+		Assert.assertTrue(roles.size()==100);
 		//Assign Resources to Users
 		
 		//Assign Roles to Users
@@ -98,6 +100,7 @@ public class RepositoryServicesTest {
 		RepoTestUtil.deleteApplication(tenant1, app1.getExternalId());
 		
 		//Delete Roles
+		RepoTestUtil.deleteRoles(tenant1, roles);
 		
 		//Delete Users
 		RepoTestUtil.deleteUsers(tenant1, users);

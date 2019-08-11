@@ -1,5 +1,6 @@
 package com.poc.ig.repo.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,9 +19,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.poc.ig.repo.dto.CreateRoleRequest;
 import com.poc.ig.repo.dto.CreateRoleResponse;
+import com.poc.ig.repo.dto.DeleteRolesRequest;
 import com.poc.ig.repo.dto.GetRoleResponse;
 import com.poc.ig.repo.dto.LinkRoleResourcesResponse;
 import com.poc.ig.repo.dto.ListRolesResponse;
+import com.poc.ig.repo.dto.RoleDto;
 import com.poc.ig.repo.dto.UnlinkRoleResourcesResponse;
 import com.poc.ig.repo.dto.UpdateRoleRequest;
 import com.poc.ig.repo.dto.UpdateRoleResponse;
@@ -41,7 +44,7 @@ import com.poc.ig.repo.repository.TenantRepository;
 import com.poc.ig.repo.repository.UserRepository;
 
 @RestController
-@RequestMapping(value = "ig/repo/v1/{tenantName}/", produces = "application/json", consumes = "application/json")
+@RequestMapping(value = "ig/repo/v1/tenants/{tenantName}/", produces = "application/json", consumes = "application/json")
 public class RoleService {
 	@Autowired
 	private OrganizationRepository orgRepo;
@@ -61,12 +64,19 @@ public class RoleService {
 	@PostMapping(path = "roles")
 	@ResponseStatus(HttpStatus.CREATED)
 	public CreateRoleResponse createRole(@PathVariable String tenantName, @RequestBody CreateRoleRequest createRoleReq) {
-		Organization org = validateTenantOrganization(tenantName, createRoleReq.getOrganization());
-		Role role = createRoleReq.getRole();
-		role.setOrganization(org);
-		role.setTenant(org.getTenant());
-		role.setOwner(validateUser(tenantName, createRoleReq.getOwner()));
-		return new CreateRoleResponse(roleRepo.save(role));
+		
+		List<Role> roleEntities = new ArrayList<Role>();
+		for (RoleDto dto : createRoleReq.getRoles()) {
+			Role r = dto.getRole();
+			Organization org = validateOrganization(tenantName, dto.getOrganization());
+			r.setTenant(org.getTenant());
+			r.setOrganization(org);
+			User owner = validateUser(tenantName, dto.getOwner());
+			r.setOwner(owner);
+			r = roleRepo.save(r);
+			roleEntities.add(r);
+		}
+		return new CreateRoleResponse(roleEntities);
 	}
 
 	@GetMapping(path = "roles/{roleExternalId}")
@@ -88,7 +98,7 @@ public class RoleService {
 		role.setName(updateRoleReq.getName());
 		role.setDescription(updateRoleReq.getDescription());
 		if(!role.getOrganization().getExternalId().equals(updateRoleReq.getOrganization())) {
-			Organization org = validateTenantOrganization(tenantName, updateRoleReq.getOrganization());
+			Organization org = validateOrganization(tenantName, updateRoleReq.getOrganization());
 			role.setOrganization(org);
 		}
 		if(!role.getOwner().getExternalId().equals(updateRoleReq.getOwner())) {
@@ -102,6 +112,14 @@ public class RoleService {
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void deleteRole(@PathVariable String tenantName, @PathVariable String roleExternalId) {
 		roleRepo.delete(validateRole(tenantName, roleExternalId ));
+	}
+	
+	@DeleteMapping(path = "roles")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void deleteRoles(@PathVariable String tenantName, @RequestBody DeleteRolesRequest deleteRolesRequest) {
+		for(String roleExtId : deleteRolesRequest.getRoles()) {
+			roleRepo.delete(validateRole(tenantName, roleExtId ));
+		}		
 	}
 
 	@PutMapping(path = "roles/{roleExternalId}/resources")
@@ -127,17 +145,7 @@ public class RoleService {
 		}
 		return new ResponseEntity<>(new UnlinkRoleResourcesResponse(roleRepo.save(role)), HttpStatus.OK);
 	}
-	
-	private Organization validateTenantOrganization(String tenantName, String orgExternalId) {
-		Optional<Organization> org = orgRepo.findByTenantNameAndOrgExternalId(tenantName, orgExternalId);
 
-		if (org.isPresent()) {
-			return org.get();
-		} else {
-			throw new InvalidOrganizationException("Invalid Organizatio(" + tenantName + ", " + orgExternalId + ")");
-		}
-	}
-	
 	private User validateUser(String tenantName, String userExternalId) {
 		Optional<User> user = userRepo.findByTenantNameAndUserExternalId(tenantName, userExternalId);
 		if (user.isPresent()) {
@@ -174,4 +182,15 @@ public class RoleService {
 			throw new InvalidResourceException("Invalid Resource(" + tenantName+", "+resourceExternalId+")");
 		}
 	}
+	
+	private Organization validateOrganization(String tenantName, String orgExternalId) {
+		Optional<Organization> org = orgRepo.findByTenantNameAndOrgExternalId(tenantName, orgExternalId);
+
+		if (org.isPresent()) {
+			return org.get();
+		} else {
+			throw new InvalidOrganizationException("Invalid Organizatio(" + tenantName + ", " + orgExternalId + ")");
+		}
+	}
+
 }

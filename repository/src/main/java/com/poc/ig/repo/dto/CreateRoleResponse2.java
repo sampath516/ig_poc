@@ -11,11 +11,12 @@ import lombok.Setter;
 @Data
 @Getter
 @Setter
-public class GetRoleResponse implements Serializable {
+public class CreateRoleResponse2 implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private RoleDto role;
+	private RoleResponse role;
 
-	public GetRoleResponse(Role roleIn) {
-		this.role = new RoleDto(roleIn);
+	public CreateRoleResponse2(Role roleIn) {
+		this.role = new RoleResponse(roleIn);
 	}
+
 }

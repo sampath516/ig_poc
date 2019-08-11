@@ -8,9 +8,10 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Data
-@Getter
 @Setter
-public class CreateRoleRequest implements Serializable {
+@Getter
+public class DeleteRolesRequest implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private List<RoleDto> roles;
+	private List<String> roles;
+
 }
