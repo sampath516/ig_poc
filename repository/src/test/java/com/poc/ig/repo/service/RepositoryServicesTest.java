@@ -18,7 +18,7 @@ import com.poc.ig.repo.test.dto.Organization;
 import com.poc.ig.repo.test.dto.Resource;
 import com.poc.ig.repo.test.dto.Role;
 import com.poc.ig.repo.test.dto.User;
-import com.poc.ig.repoutil.RepoTestUtil;
+import com.poc.ig.repoutil.RepoTestUtil; 
 
 
 @RunWith(SpringRunner.class)
@@ -65,9 +65,9 @@ public class RepositoryServicesTest {
 		Assert.assertNotNull(users);
 		Assert.assertTrue(users.size() == 1);	
 		String managerExternalId =  users.get(0).getExternalId();
-		users = RepoTestUtil.createUsers(tenant1, org1.getExternalId(), users.get(0).getExternalId(), 2,100);
+		users = RepoTestUtil.createUsers(tenant1, org1.getExternalId(), users.get(0).getExternalId(), 2,10);
 		Assert.assertNotNull(users);
-		Assert.assertTrue(users.size() == 99);
+		Assert.assertTrue(users.size() == 9);
 		
 		
 		//Create an Application with resources		

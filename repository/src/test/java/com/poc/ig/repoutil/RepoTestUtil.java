@@ -29,7 +29,7 @@ import com.poc.ig.repo.test.dto.Role;
 import com.poc.ig.repo.test.dto.Tenant;
 import com.poc.ig.repo.test.dto.User;
 
-public class RepoTestUtil {
+public class RepoTestUtil { 
 
 	private static RestTemplate restClient;
 	private static String tenantBaseUri;

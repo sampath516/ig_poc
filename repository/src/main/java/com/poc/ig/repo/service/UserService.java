@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import com.poc.ig.repo.dto.CreateUserRequest;
 import com.poc.ig.repo.dto.CreateUserResponse;
 import com.poc.ig.repo.dto.DeleteUsersRequest;
@@ -65,6 +66,7 @@ public class UserService {
 
 	@PostMapping(path = "users")
 	@ResponseStatus(HttpStatus.CREATED)
+	@HystrixCommand
 	public CreateUserResponse createUser(@PathVariable String tenantName, @RequestBody CreateUserRequest createUserReq) {
 		List<UserRequest>  usersIn = createUserReq.getUsers();
 		List<User> userEntities = new ArrayList<User>();
