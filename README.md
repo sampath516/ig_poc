@@ -9,3 +9,14 @@ Micro service buid and deployment: mvn spring-boot:run
 
 
 "http://<gateway>:%d/<micro-service-name>/ig/repo/v1/tenants"
+
+
+
+
+MicroService                       Port
+gateway							   8080
+discovery-server				   8761
+Configuration Server               8888
+import							   8082
+connector-import-csv               8083
+repository						   8081	 
