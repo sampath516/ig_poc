@@ -13,6 +13,6 @@ import lombok.Setter;
 @Setter
 public class CreateResourceResponse implements Serializable {
 	private static final long serialVersionUID = 1L;
-	List<ResourceDto> resources = new ArrayList<ResourceDto>();
+	List<ResourceResponse> resources = new ArrayList<ResourceResponse>();
 
 }

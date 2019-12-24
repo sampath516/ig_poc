@@ -2,6 +2,7 @@ package com.poc.ig.repo.test.dto;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.Data;
 import lombok.Getter;
@@ -22,9 +23,14 @@ public class UserDto implements Serializable{
 	private String email;
 	private String manager;
 	private String organization;
+	private List<RoleDto> roles;
+	private List<ResourceDto> resources;
+	
+	
+	
+	
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
-
 	public UserDto() {
 		
 	}
@@ -39,5 +45,23 @@ public class UserDto implements Serializable{
 		this.manager = manager;
 		this.organization = organization;
 
+	}
+	
+	@Data
+	@Getter
+	@Setter
+	public static class RoleDto{
+		private long id;
+		private String externalId;
+		private String name;
+	}
+	
+	@Data
+	@Getter
+	@Setter
+	public static class ResourceDto{
+		private long id;
+		private String externalId;
+		private String name;
 	}
 }

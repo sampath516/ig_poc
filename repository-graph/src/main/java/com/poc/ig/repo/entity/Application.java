@@ -28,6 +28,7 @@ public class Application implements Serializable {
 	private static final long serialVersionUID = 1L;
 	@Id
 	@GeneratedValue
+	@EqualsAndHashCode.Include
 	private Long id;
 	
 	@EqualsAndHashCode.Include
@@ -43,11 +44,10 @@ public class Application implements Serializable {
 	@LastModifiedDate
 	private LocalDateTime updatedAt;
 	
-	@EqualsAndHashCode.Include
+	
 	@Relationship(type = "APP_BELONGS_TO_TEN", direction = Relationship.OUTGOING)
 	private Tenant tenant;
 	
-	@EqualsAndHashCode.Include
 	@Relationship(type = "APP_BELONGS_TO_ORG", direction = Relationship.OUTGOING)
 	private Organization organization;
 

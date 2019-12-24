@@ -11,6 +11,6 @@ import lombok.Setter;
 @Setter
 public class CreateRoleResponse {
 	
-	List<RoleDto> roles = new ArrayList<RoleDto>();
+	List<RoleResponse> roles = new ArrayList<RoleResponse>();
 
 }

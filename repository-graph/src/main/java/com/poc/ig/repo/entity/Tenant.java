@@ -28,6 +28,7 @@ public class Tenant implements Serializable {
 	private static final long serialVersionUID = 1L;
 	@Id
 	@GeneratedValue
+	@EqualsAndHashCode.Include
 	private Long id;
 	@EqualsAndHashCode.Include
 	private String name;

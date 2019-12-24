@@ -17,12 +17,11 @@ import lombok.Setter;
 @NoArgsConstructor
 public class CreateRoleResponse implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private List<RoleDto> roles = new ArrayList<RoleDto>();
+	private List<RoleResponse> roles = new ArrayList<RoleResponse>();
 
 	public CreateRoleResponse(List<Role> rolesIn) {
 		for(Role r: rolesIn) {
-			roles.add(new RoleDto(r));
+			roles.add(new RoleResponse(r));
 		}
 	}
-
 }

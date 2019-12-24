@@ -20,14 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.poc.ig.repo.dto.CreateUserRequest;
 import com.poc.ig.repo.dto.CreateUserResponse;
 import com.poc.ig.repo.dto.DeleteUsersRequest;
-import com.poc.ig.repo.dto.GetUserResponse;
-import com.poc.ig.repo.dto.LinkResourcesResponse;
-import com.poc.ig.repo.dto.LinkRolesResponse;
 import com.poc.ig.repo.dto.ListUsersResponse;
-import com.poc.ig.repo.dto.UnLinkResourcesResponse;
 import com.poc.ig.repo.dto.UpdateUserRequest;
 import com.poc.ig.repo.dto.UpdateUserResponse;
 import com.poc.ig.repo.dto.UserRequest;
+import com.poc.ig.repo.dto.UserResponse;
 import com.poc.ig.repo.entity.Organization;
 import com.poc.ig.repo.entity.Resource;
 import com.poc.ig.repo.entity.Role;
@@ -88,10 +85,10 @@ public class UserService {
 	}
 
 	@GetMapping(path = "users/{userExternalId}")
-	public ResponseEntity<GetUserResponse> getUser(@PathVariable String tenantName,
+	public ResponseEntity<UserResponse> getUser(@PathVariable String tenantName,
 			@PathVariable String userExternalId) {
-		User user = validateUser(tenantName, userExternalId);
-		return new ResponseEntity<>(new GetUserResponse(user), HttpStatus.OK);
+		User user = getUserByTenantNameAndExternalId(tenantName, userExternalId);
+		return new ResponseEntity<>(new UserResponse(user), HttpStatus.OK);
 	}
 
 	@GetMapping(path = "users")
@@ -134,8 +131,7 @@ public class UserService {
 	}
 
 	@PutMapping(path = "users/{userExternalId}/roles")
-	public ResponseEntity<LinkRolesResponse> linkRoles(@PathVariable String tenantName,
-			@PathVariable String userExternalId, List<String> roles) {
+	public ResponseEntity<UserResponse> linkRoles(@PathVariable String tenantName, @PathVariable String userExternalId, @RequestBody List<String> roles) {
 		User user = validateUser(tenantName, userExternalId);
 
 		for (String role : roles) {
@@ -144,26 +140,26 @@ public class UserService {
 			roleEntity.getUsers().add(user);
 			roleRepo.save(roleEntity);
 		}
-		return new ResponseEntity<>(new LinkRolesResponse(userRepo.save(user)), HttpStatus.OK);
+		return new ResponseEntity<UserResponse>(new UserResponse(userRepo.save(user)), HttpStatus.OK);
 	}
-
+	
 	@DeleteMapping(path = "users/{userExternalId}/roles")
-	public ResponseEntity<LinkRolesResponse> unlinkRoles(@PathVariable String tenantName,
-			@PathVariable String userExternalId, List<String> roles) {
-		User user = validateUser(tenantName, userExternalId);
-
-		for (String role : roles) {
-			Role roleEntity = validateRole(tenantName, role);
-			user.getRoles().remove(roleEntity);
-			roleEntity.getUsers().remove(user);
-			roleRepo.save(roleEntity);
+	@ResponseStatus(HttpStatus.OK)
+	public void unlinkRoles(@PathVariable String tenantName, @PathVariable String userExternalId, @RequestBody List<String> roles) {
+		User user = getUserByTenantNameAndExternalId(tenantName, userExternalId);
+		for (String role : roles) {			
+			Role roleEntity = loadRole(role);
+			if(roleEntity != null) {
+				user.getRoles().remove(roleEntity);
+				roleEntity.getUsers().remove(user);
+				roleRepo.save(roleEntity);
+			}			
 		}
-		return new ResponseEntity<>(new LinkRolesResponse(userRepo.save(user)), HttpStatus.OK);
+		userRepo.save(user);
 	}
 
 	@PutMapping(path = "users/{userExternalId}/resources")
-	public ResponseEntity<LinkResourcesResponse> linkResources(@PathVariable String tenantName,
-			@PathVariable String userExternalId, List<String> resources) {
+	public ResponseEntity<UserResponse> linkResources(@PathVariable String tenantName, @PathVariable String userExternalId, @RequestBody List<String> resources) {
 		User user = validateUser(tenantName, userExternalId);
 
 		for (String res : resources) {
@@ -172,20 +168,22 @@ public class UserService {
 			resEntity.getUsers().add(user);
 			resourceRepo.save(resEntity);
 		}
-		return new ResponseEntity<>(new LinkResourcesResponse(userRepo.save(user)), HttpStatus.OK);
+		return new ResponseEntity<>(new UserResponse(userRepo.save(user)), HttpStatus.OK);
 	}
 
 	@DeleteMapping(path = "users/{userExternalId}/resources")
-	public ResponseEntity<UnLinkResourcesResponse> unLinkResources(@PathVariable String tenantName,
-			@PathVariable String userExternalId, List<String> resources) {
-		User user = validateUser(tenantName, userExternalId);
-		for (String res : resources) {
-			Resource resEntity = validateResource(tenantName, res);
-			user.getResources().remove(resEntity);
-			resEntity.getUsers().remove(user);
-			resourceRepo.save(resEntity);
+	@ResponseStatus(HttpStatus.OK)
+	public void unLinkResources(@PathVariable String tenantName, @PathVariable String userExternalId, @RequestBody List<String> resources) {
+		User user = getUserByTenantNameAndExternalId(tenantName, userExternalId);
+      	for (String res : resources) {			
+			Resource resourceEntity = loadResource(res);
+			if (resourceEntity != null) {
+				user.getResources().remove(resourceEntity);
+				resourceEntity.getUsers().remove(user);
+				resourceRepo.save(resourceEntity);
+			}			
 		}
-		return new ResponseEntity<>(new UnLinkResourcesResponse(userRepo.save(user)), HttpStatus.OK);
+		userRepo.save(user);
 	}
 
 	private Organization validateOrganization(String tenantName, String orgExternalId) {
@@ -225,6 +223,15 @@ public class UserService {
 			throw new InvalidRoleException("Invalid Role(" + tenantName + ", " + roleExternalId + ")");
 		}
 	}
+	
+	private Role loadRole(String roleExternalId) {
+		Optional<Role> role = roleRepo.findByExternalId(roleExternalId);
+		if (role.isPresent()) {
+			return role.get();
+		} else {
+			return null;
+		}
+	}
 
 	private Resource validateResource(String tenantName, String resourceExternalId) {
 		Optional<Resource> resource = resourceRepo.findByTenantNameAndResourceExternalId(tenantName,
@@ -234,5 +241,28 @@ public class UserService {
 		} else {
 			throw new InvalidResourceException("Invalid Resource(" + tenantName + ", " + resourceExternalId + ")");
 		}
+	}
+	
+	private Resource loadResource(String resourceExternalId) {
+		Optional<Resource> resource = resourceRepo.findByExternalId(resourceExternalId);
+		if (resource.isPresent()) {
+			return resource.get();
+		} else {
+			return null;
+		}
+	}
+	
+	private User getUserByTenantNameAndExternalId(String tenantName, String userExternalId) {
+		Optional<User> userTemp = userRepo.findByExternalId(userExternalId);
+		User user = null;
+		if (userTemp.isPresent()) {
+			user = userTemp.get();
+			if (!user.getTenant().getName().equals(tenantName)) {
+				throw new InvalidUserException("Invalid User(" + tenantName + ", " + userExternalId + ")");
+			}
+		} else {
+			throw new InvalidUserException("Invalid User(" + tenantName + ", " + userExternalId + ")");
+		}
+		return user;
 	}
 }

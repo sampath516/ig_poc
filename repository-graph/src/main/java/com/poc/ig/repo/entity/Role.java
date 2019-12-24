@@ -28,6 +28,7 @@ public class Role implements Serializable {
 	private static final long serialVersionUID = 1L;
 	@Id
 	@GeneratedValue
+	@EqualsAndHashCode.Include
 	private Long id;
 	@EqualsAndHashCode.Include
 	private String externalId;
@@ -42,11 +43,10 @@ public class Role implements Serializable {
     @Relationship(type = "OWNER_OF_ROLE", direction = Relationship.INCOMING)
 	private User owner;
     
-    @EqualsAndHashCode.Include
+   
 	@Relationship(type = "ROLE_BELONGS_TO_TEN", direction = Relationship.OUTGOING)
 	private Tenant tenant;
-    
-    @EqualsAndHashCode.Include
+
     @Relationship(type = "ROLE_BELONGS_TO_ORG", direction = Relationship.OUTGOING)
 	private Organization organization;
 
@@ -56,7 +56,10 @@ public class Role implements Serializable {
     @Relationship(type = "ROLE_ASSIGNED_RES", direction = Relationship.OUTGOING)	
     private Set<Resource> resources = new HashSet<Resource>();
     
-    @Relationship(type = "PARENT_OF", direction = Relationship.OUTGOING)	
+    @Relationship(type = "CHIELD_OF_ROLE", direction = Relationship.OUTGOING)	
+    private Role  parent;
+    
+    @Relationship(type = "CHIELD_OF_ROLE", direction = Relationship.INCOMING)	
     private Set<Role> subRoles = new HashSet<Role>();
 
 }

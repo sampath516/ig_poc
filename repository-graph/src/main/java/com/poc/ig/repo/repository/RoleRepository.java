@@ -14,6 +14,8 @@ public interface RoleRepository extends Neo4jRepository<Role, Long> {
 	@Query("MATCH (role: role) -[r:ROLE_BELONGS_TO_TEN]-> (ten: tenant) WHERE ten.name=$tenantName AND role.externalId = $roleExternalId RETURN role,r,ten")
 	public Optional<Role> findByTenantNameAndRoleExternalId(@Param("tenantName") String tenantName, @Param("roleExternalId") String roleExternalId);
 	
+	public Optional<Role> findByExternalId(String roleExternalId);
+	
 	@Query("MATCH (role: role)-[r:ROLE_BELONGS_TO_TEN]->(ten: tenant) WHERE ten.name = $tenantName RETURN role, r, ten")
 	public List<Role> findByTenantName(@Param("tenantName") String tenantName);
 

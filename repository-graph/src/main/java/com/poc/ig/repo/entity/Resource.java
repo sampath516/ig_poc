@@ -29,6 +29,7 @@ public class Resource implements Serializable {
 	
 	@Id
 	@GeneratedValue
+	@EqualsAndHashCode.Include
 	private Long id;
 	
 	@EqualsAndHashCode.Include
@@ -45,21 +46,25 @@ public class Resource implements Serializable {
 	@LastModifiedDate
 	private LocalDateTime updatedAt;
 	
-	@EqualsAndHashCode.Include
+	
 	@Relationship(type = "RES_BELONGS_TO_TEN", direction = Relationship.OUTGOING)
 	private Tenant tenant;
 	
-	@EqualsAndHashCode.Include
 	@Relationship(type = "RES_BELONGS_APP", direction = Relationship.OUTGOING)
 	private Application application;
 
 	@Relationship(type = "ROLE_ASSIGNED_RES", direction = Relationship.INCOMING)
-	private Set<Role> roles;
+	private Set<Role> roles = new HashSet<Role>();
 
 	@Relationship(type = "USER_ASSIGNED_RES", direction = Relationship.INCOMING)
 	private Set<User> users = new HashSet<User>();
 	
 	@Relationship(type = "OWNER_OF_RES", direction = Relationship.INCOMING)
 	private User owner;
-
+	
+	@Relationship(type = "CHIELD_OF_RES", direction = Relationship.OUTGOING)
+	private Resource parent;
+	
+	@Relationship(type = "CHIELD_OF_RES", direction = Relationship.INCOMING)
+	private Set<Resource> subResources = new HashSet<Resource>();
 }

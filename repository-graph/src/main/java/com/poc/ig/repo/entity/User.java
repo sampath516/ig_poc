@@ -29,6 +29,7 @@ public class User implements Serializable {
 	private static final long serialVersionUID = 1L;
 	@Id
 	@GeneratedValue
+	@EqualsAndHashCode.Include
 	private Long id;
 	@EqualsAndHashCode.Include
 	private String externalId;
@@ -36,7 +37,7 @@ public class User implements Serializable {
 	private String userName;
 	private String firstName;
 	private String lastName;
-	@EqualsAndHashCode.Include
+
 	private String email;
 
 	@CreatedDate
@@ -49,11 +50,10 @@ public class User implements Serializable {
 	@Relationship(type = "MANAGER_OF", direction = Relationship.INCOMING)
 	private User manager;
 	
-	@EqualsAndHashCode.Include
+	
 	@Relationship(type = "USER_BELONGS_TO_TEN", direction = Relationship.OUTGOING)
 	private Tenant tenant;
 	
-	@EqualsAndHashCode.Include
 	@Relationship(type = "USER_BELONGS_TO_ORG", direction = Relationship.OUTGOING)
 	private Organization organization;
 

@@ -31,4 +31,6 @@ public class RoleDto implements Serializable {
 		this.owner = owner;
 		this.organization = organization;
 	}
+	
+	
 }

@@ -20,11 +20,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.poc.ig.repo.dto.CreateRoleRequest;
 import com.poc.ig.repo.dto.CreateRoleResponse;
 import com.poc.ig.repo.dto.DeleteRolesRequest;
-import com.poc.ig.repo.dto.GetRoleResponse;
-import com.poc.ig.repo.dto.LinkRoleResourcesResponse;
 import com.poc.ig.repo.dto.ListRolesResponse;
 import com.poc.ig.repo.dto.RoleDto;
-import com.poc.ig.repo.dto.UnlinkRoleResourcesResponse;
+import com.poc.ig.repo.dto.RoleResponse;
 import com.poc.ig.repo.dto.UpdateRoleRequest;
 import com.poc.ig.repo.dto.UpdateRoleResponse;
 import com.poc.ig.repo.entity.Organization;
@@ -75,15 +73,23 @@ public class RoleService {
 			User owner = validateUser(tenantName, dto.getOwner());
 			r.setOwner(owner);
 			r = roleRepo.save(r);
+			orgRepo.save(org);
 			roleEntities.add(r);
 		}
 		return new CreateRoleResponse(roleEntities);
 	}
 
 	@GetMapping(path = "roles/{roleExternalId}")
-	public ResponseEntity<GetRoleResponse> getRole(@PathVariable String tenantName, @PathVariable String roleExternalId) {
+	public ResponseEntity<RoleResponse> getRole(@PathVariable String tenantName, @PathVariable String roleExternalId) {
 		Role role = validateRole(tenantName, roleExternalId);
-		return new ResponseEntity<>(new GetRoleResponse(role), HttpStatus.OK);
+		
+		Optional<Role> roleTemp = roleRepo.findByExternalId(roleExternalId);
+		if (roleTemp.isPresent()) {
+			role = roleTemp.get();
+		} else {
+			throw new InvalidRoleException("Invalid User(" + tenantName + ", " + roleExternalId + ")");
+		}	
+		return new ResponseEntity<>(new RoleResponse(role), HttpStatus.OK);
 	}
 
 	@GetMapping(path = "roles")
@@ -124,7 +130,7 @@ public class RoleService {
 	}
 
 	@PutMapping(path = "roles/{roleExternalId}/resources")
-	public ResponseEntity<LinkRoleResourcesResponse> linkRoleResources(@PathVariable String tenantName, @PathVariable String roleExternalId, List<String> resources) {
+	public ResponseEntity<RoleResponse> linkRoleResources(@PathVariable String tenantName, @PathVariable String roleExternalId, @RequestBody List<String> resources) {
 		Role role = validateRole(tenantName, roleExternalId);
 		for(String res : resources) {
 			Resource resEntity = validateResource(tenantName, res);
@@ -132,20 +138,51 @@ public class RoleService {
 			resEntity.getRoles().add(role);
 			resourceRepo.save(resEntity);
 		}
-		return new ResponseEntity<>(new LinkRoleResourcesResponse(roleRepo.save(role)), HttpStatus.OK);
+		return new ResponseEntity<>(new RoleResponse(roleRepo.save(role)), HttpStatus.OK);
 	}
 	
-	@DeleteMapping(path = "{orgId}/roles/{roleId}/resources")
-	public ResponseEntity<UnlinkRoleResourcesResponse> unlinkRoleResources(@PathVariable String tenantName, @PathVariable String roleExternalId, List<String> resources) {
-		Role role = validateRole(tenantName, roleExternalId);
+	@DeleteMapping(path = "roles/{roleExternalId}/resources")
+	@ResponseStatus(HttpStatus.OK)
+	public void unlinkRoleResources(@PathVariable String tenantName, @PathVariable String roleExternalId,  @RequestBody List<String> resources) {
+		Role role = getRoleByTenantNameAndExternalId(tenantName, roleExternalId);
 		for(String res : resources) {
 			Resource resEntity = validateResource(tenantName, res);
-			role.getResources().remove(resEntity);
-			resEntity.getRoles().remove(role);
-			resourceRepo.save(resEntity);
+			if(resEntity != null) {
+				role.getResources().remove(resEntity);
+				resEntity.getRoles().remove(role);
+				resourceRepo.save(resEntity);
+			}
 		}
-		return new ResponseEntity<>(new UnlinkRoleResourcesResponse(roleRepo.save(role)), HttpStatus.OK);
+		roleRepo.save(role);
 	}
+	
+	@PutMapping(path = "roles/{parentRoleExternalId}/roles")
+	public ResponseEntity<RoleResponse> linkChildRoles(@PathVariable String tenantName, @PathVariable String parentRoleExternalId, @RequestBody List<String> childRoles) {
+		Role parentRole = validateRole(tenantName, parentRoleExternalId);
+		for(String role : childRoles) {
+			Role roleEntity = validateRole(tenantName, role);
+			roleEntity.setParent(parentRole);
+			parentRole.getSubRoles().add(roleEntity);
+			roleRepo.save(roleEntity);			
+		}
+		return new ResponseEntity<>(new RoleResponse(roleRepo.save(parentRole)), HttpStatus.OK);
+	}
+	
+	@DeleteMapping(path = "roles/{parentRoleExternalId}/roles")
+	@ResponseStatus(HttpStatus.OK)
+	public void unlinkChildRoles(@PathVariable String tenantName, @PathVariable String parentRoleExternalId, @RequestBody List<String> childRoles) {
+		Role parentRole = getRoleByTenantNameAndExternalId(tenantName, parentRoleExternalId);
+		for(String role : childRoles) {
+			Role roleEntity = validateRole(tenantName, role);
+			if(roleEntity != null) {
+				roleEntity.setParent(null);
+				parentRole.getSubRoles().remove(roleEntity);
+				roleRepo.save(roleEntity);	
+			}		
+		}
+		roleRepo.save(parentRole);
+	}
+
 
 	private User validateUser(String tenantName, String userExternalId) {
 		Optional<User> user = userRepo.findByTenantNameAndUserExternalId(tenantName, userExternalId);
@@ -173,6 +210,20 @@ public class RoleService {
 		} else {
 			throw new InvalidRoleException("Invalid Role(" + tenantName+", "+roleExternalId+")");
 		}
+	}
+	
+	private Role getRoleByTenantNameAndExternalId(String tenantName, String roleExternalId) {
+		Optional<Role> roleTemp = roleRepo.findByExternalId(roleExternalId);
+		Role role = null;
+		if (roleTemp.isPresent()) {
+			role = roleTemp.get(); 
+			if(!role.getTenant().getName().equals(tenantName)) {
+				throw new InvalidRoleException("Invalid Role(" + tenantName+", "+roleExternalId+")");	
+			}
+		} else {
+			throw new InvalidRoleException("Invalid Role(" + tenantName+", "+roleExternalId+")");
+		}
+		return role;
 	}
 	
 	private Resource validateResource(String tenantName, String resourceExternalId) {

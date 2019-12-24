@@ -23,6 +23,7 @@ import com.poc.ig.repo.dto.DeleteResourcesRequest;
 import com.poc.ig.repo.dto.GetResourceResponse;
 import com.poc.ig.repo.dto.ListResourcesResponse;
 import com.poc.ig.repo.dto.ResourceRequest;
+import com.poc.ig.repo.dto.ResourceResponse;
 import com.poc.ig.repo.dto.UpdateResourceRequest;
 import com.poc.ig.repo.dto.UpdateResourceResponse;
 import com.poc.ig.repo.entity.Application;
@@ -63,15 +64,22 @@ public class ResourceService {
 			resource.setTenant(app.getTenant());
 			resource = resourceRepo.save(resource);
 			resourceEntities.add(resource);
+			appRepo.save(app);
 		}		
-
+			
 		return new CreateResourceResponse(resourceEntities);
 	}
 
 	@GetMapping(path = "resources/{resourceExternalId}")
-	public ResponseEntity<GetResourceResponse> getResource(@PathVariable String tenantName,@PathVariable String resourceExternalId) {
-		Resource resource = validateResource(tenantName, resourceExternalId);
-		return new ResponseEntity<>(new GetResourceResponse(resource), HttpStatus.OK);
+	public ResponseEntity<ResourceResponse> getResource(@PathVariable String tenantName,@PathVariable String resourceExternalId) {
+		Resource resource = validateResource(tenantName, resourceExternalId);		
+		Optional<Resource> resourceTemp = resourceRepo.findById(resource.getId());
+		if (resourceTemp.isPresent()) {
+			resource = resourceTemp.get(); 
+		} else {
+			throw new InvalidResourceException("Invalid Resource(" + tenantName+", "+resourceExternalId+")");
+		}			
+		return new ResponseEntity<>(new ResourceResponse(resource), HttpStatus.OK);
 	}
 
 	@GetMapping(path = "resources")
@@ -102,6 +110,34 @@ public class ResourceService {
 			resourceRepo.delete(validateResource(tenantName, resExtId));
 		}		
 	}
+	
+	@PutMapping(path = "resources/{parentResourceExternalId}/resources")
+	public ResponseEntity<ResourceResponse> linkChildResources(@PathVariable String tenantName, @PathVariable String parentResourceExternalId, @RequestBody List<String> childResources) {
+		Resource parentResource = validateResource(tenantName, parentResourceExternalId);
+		for(String res : childResources) {
+			Resource resEntity = validateResource(tenantName, res);
+			resEntity.setParent(parentResource);
+			parentResource.getSubResources().add(resEntity);
+			resourceRepo.save(resEntity);			
+		}
+		return new ResponseEntity<>(new ResourceResponse(resourceRepo.save(parentResource)), HttpStatus.OK);
+	}
+	
+	@DeleteMapping(path = "resources/{parentResourceExternalId}/resources")
+	@ResponseStatus(HttpStatus.OK)
+	public void unlinkChildResources(@PathVariable String tenantName, @PathVariable String parentResourceExternalId, @RequestBody List<String> childResources) {
+		Resource parentResource = getResourceByTenantNameAndExternalId(tenantName, parentResourceExternalId);
+		for(String res : childResources) {
+			Resource resEntity = validateResource(tenantName, res);
+			if(resEntity != null) {
+				resEntity.setParent(null);
+				parentResource.getSubResources().remove(resEntity);
+				resourceRepo.save(resEntity);
+			}			
+		}
+		resourceRepo.save(parentResource);
+	}
+	
 
 	private Resource validateResource(String tenantName, String resourceExternalId) {
 		Optional<Resource> resource = resourceRepo.findByTenantNameAndResourceExternalId(tenantName, resourceExternalId);
@@ -110,6 +146,20 @@ public class ResourceService {
 		} else {
 			throw new InvalidResourceException("Invalid Resource(" + tenantName+", "+resourceExternalId+")");
 		}
+	}
+	
+	private Resource getResourceByTenantNameAndExternalId(String tenantName, String resourceExternalId) {
+		Optional<Resource> resourceContainer = resourceRepo.findByExternalId(resourceExternalId);
+		Resource resource = null;
+		if (resourceContainer.isPresent()) {
+			resource = resourceContainer.get();
+			if (!resource.getTenant().getName().equals(tenantName)) {
+				throw new InvalidResourceException("Invalid Resource(" + tenantName + ", " + resourceExternalId + ")");
+			}
+		} else {
+			throw new InvalidResourceException("Invalid Resource(" + tenantName + ", " + resourceExternalId + ")");
+		}
+		return resource;
 	}
 	
 	private Application validateApplication(String tenantName, String appExternalId) {

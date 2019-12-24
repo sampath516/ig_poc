@@ -2,6 +2,8 @@ package com.poc.ig.repo.dto;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.poc.ig.repo.entity.Role;
@@ -24,6 +26,7 @@ public class RoleDto implements Serializable {
 	private String description;
 	private String owner;
 	private String organization;
+	private List<ResourceDto> resources = new ArrayList<RoleDto.ResourceDto>();
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
 
@@ -46,6 +49,26 @@ public class RoleDto implements Serializable {
 		role.setName(name);
 		role.setDescription(description);
 		return role;
+	}
+	
+	@Data
+	@Getter
+	@Setter
+	public static class ResourceDto {
+		private long id;
+		private String externalId;
+		private String name;
+
+		public ResourceDto() {
+
+		}
+
+		public ResourceDto(long id, String externalId, String name) {
+			this.id = id;
+			this.externalId = externalId;
+			this.name = name;
+		}
+
 	}
 
 }
