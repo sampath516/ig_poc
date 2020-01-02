@@ -6,9 +6,6 @@ import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.web.client.RestTemplate;
 
 import com.poc.ig.repo.test.dto.ApplicationDto;
@@ -16,10 +13,11 @@ import com.poc.ig.repo.test.dto.OrganizationDto;
 import com.poc.ig.repo.test.dto.ResourceResponse;
 import com.poc.ig.repo.test.dto.RoleResponse;
 import com.poc.ig.repo.test.dto.UserDto;
+import com.poc.ig.repo.test.dto.UserResourceEntitlement;
 import com.poc.ig.repoutil.RepoTestUtil; 
 
 
-@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+//@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 public class RepositoryServicesTest {
 
 	private RestTemplate restClient = new RestTemplate();
@@ -33,10 +31,225 @@ public class RepositoryServicesTest {
 		RepoTestUtil.setTenantBaseUri(tenantBaseUri);
 	}
 
-    @LocalServerPort 
-	private int port;
+//    @LocalServerPort 
+	private int port=8081;
 	
-	@Test  
+	//@Test
+    public void prepareCertificationDataAndTestEntitlements() {
+		String tenantBroadcom = "Broadcom";
+		String tenantBroadcomDesc = "Broadcom";
+		
+		String tenantBroadcomOrgESDExtId = "ESD";
+		String tenantBroadcomOrgESDName = "ESD";
+		String tenantBroadcomOrgESDDesc = "Enterprise Service Division";
+		
+		String appRallyExtId = "Rally";
+		String appRallyName = "Rally";
+		String appRallyDesc = "Rally Application";
+		
+		String appJenkinsExtId = "Jenkins";
+		String appJenkinsName = "Jenkins";
+		String appJenkinsDesc = "Jenkins Application";
+		
+	
+		//Create a Tenant and Organization		
+		RepoTestUtil.createTenant(tenantBroadcom, tenantBroadcomDesc);
+		OrganizationDto org1 = new OrganizationDto(tenantBroadcomOrgESDExtId, tenantBroadcomOrgESDName, tenantBroadcomOrgESDDesc);
+		RepoTestUtil.createOrganization(tenantBroadcom, org1);
+		
+		//Create Users
+		
+		List<UserDto> users = RepoTestUtil.createUsers(tenantBroadcom, org1.getExternalId(), null, 1,1);
+		Assertions.assertNotNull(users);
+		Assertions.assertTrue(users.size() == 1);
+		//USER-EID-1
+		String manager1ExternalId =  users.get(0).getExternalId();
+		
+		users = RepoTestUtil.createUsers(tenantBroadcom, org1.getExternalId(), null, 5,5);
+		Assertions.assertNotNull(users);
+		Assertions.assertTrue(users.size() == 1);
+		//USER-EID-5
+		String owner1ExternalId =  users.get(0).getExternalId();
+		
+		users = RepoTestUtil.createUsers(tenantBroadcom, org1.getExternalId(), null, 6,6);
+		Assertions.assertNotNull(users);
+		Assertions.assertTrue(users.size() == 1);
+		//USER-EID-6
+		String manager2ExternalId =  users.get(0).getExternalId();
+		
+		
+		users = RepoTestUtil.createUsers(tenantBroadcom, org1.getExternalId(), null, 10,10);
+		Assertions.assertNotNull(users);
+		Assertions.assertTrue(users.size() == 1);
+		//USER-EID-10
+		String owner2ExternalId =  users.get(0).getExternalId();
+				
+		users = RepoTestUtil.createUsers(tenantBroadcom, org1.getExternalId(), manager1ExternalId, 2,4);
+		Assertions.assertNotNull(users);
+		Assertions.assertTrue(users.size() == 3);
+		
+
+		users = RepoTestUtil.createUsers(tenantBroadcom, org1.getExternalId(), manager2ExternalId, 7,9);
+		Assertions.assertNotNull(users);
+		Assertions.assertTrue(users.size() == 3);
+		
+		
+		//Create an Application with resources	
+		//Rally, //USER-EID-5
+		ApplicationDto appRally = new ApplicationDto(appRallyExtId, appRallyName, appRallyDesc, org1.getExternalId(),  owner1ExternalId);
+		RepoTestUtil.createApplication(tenantBroadcom, appRally);
+		
+		//Jenkins, //USER-EID-10
+		ApplicationDto appJenkins = new ApplicationDto(appJenkinsExtId, appJenkinsName, appJenkinsDesc, org1.getExternalId(),  owner2ExternalId);
+		RepoTestUtil.createApplication(tenantBroadcom, appJenkins);
+		
+		List<ResourceResponse> resources = RepoTestUtil.createResources(tenantBroadcom, appRally.getExternalId(),owner1ExternalId, 1, 5);
+		Assertions.assertTrue(resources.size()==5);
+		
+		resources = RepoTestUtil.createResources(tenantBroadcom, appJenkins.getExternalId(),owner2ExternalId, 6, 10);
+		Assertions.assertTrue(resources.size()==5);
+		
+		//Assign Resources to Users
+		String resExternalId = "RES-EID-1";
+		List<String> userExternalIds = new ArrayList<String>();
+		userExternalIds.add("USER-EID-1");
+		userExternalIds.add("USER-EID-2");
+		userExternalIds.add("USER-EID-3");
+		userExternalIds.add("USER-EID-4");
+		RepoTestUtil.linkUsersToResource(tenantBroadcom, resExternalId, userExternalIds);
+		
+		resExternalId = "RES-EID-6";
+		userExternalIds = new ArrayList<String>();
+		userExternalIds.add("USER-EID-7");
+		userExternalIds.add("USER-EID-8");
+		userExternalIds.add("USER-EID-9");
+		RepoTestUtil.linkUsersToResource(tenantBroadcom, resExternalId, userExternalIds);
+		
+		//Verifying Entitlements
+		List<UserResourceEntitlement> entitlements = RepoTestUtil.getUserResourceEntitlementsByTenantNameAndOrgName(tenantBroadcom, tenantBroadcomOrgESDExtId); 
+		Assertions.assertEquals(7, entitlements.size());
+		Assertions.assertNotNull(entitlements.get(0));
+		Assertions.assertEquals(tenantBroadcom, entitlements.get(0).getTenantName());
+		Assertions.assertEquals(tenantBroadcomOrgESDExtId, entitlements.get(0).getOrganization());
+		
+		
+		//Cleanup
+		
+		//Delete Resources
+		String[] resourceExtIds = new String[] {"RES-EID-1","RES-EID-2","RES-EID-3","RES-EID-4","RES-EID-5","RES-EID-6","RES-EID-7","RES-EID-8","RES-EID-9","RES-EID-10"};
+		RepoTestUtil.deleteResources(tenantBroadcom, resourceExtIds);;
+		
+		//Delete Applications
+		RepoTestUtil.deleteApplication(tenantBroadcom, appRallyExtId);
+		RepoTestUtil.deleteApplication(tenantBroadcom, appJenkinsExtId);
+		
+		//Delete Roles
+
+		
+		//Delete Users
+		String[] userExtIds = new String[] {"USER-EID-1","USER-EID-2","USER-EID-3","USER-EID-4","USER-EID-5","USER-EID-6","USER-EID-7","USER-EID-8","USER-EID-9","USER-EID-10"};
+		RepoTestUtil.deleteUsers(tenantBroadcom, userExtIds); 
+
+		//Delete Organization
+		RepoTestUtil.deleteOrganization(tenantBroadcom, tenantBroadcomOrgESDExtId);
+		
+		//Delete Tenant
+		RepoTestUtil.deleteTenant(tenantBroadcom);
+
+    }
+	
+	@Test
+    public void prepareCertificationDataAndTestEntitlements_v1() {
+		String tenantBroadcom = "Broadcom";
+		String tenantBroadcomDesc = "Broadcom";
+		
+		String tenantBroadcomOrgESDExtId = "ESD";
+		String tenantBroadcomOrgESDName = "ESD";
+		String tenantBroadcomOrgESDDesc = "Enterprise Service Division";
+		
+		String appRallyExtId = "Rally";
+		String appRallyName = "Rally";
+		String appRallyDesc = "Rally Application";
+		
+	
+		//Create a Tenant and Organization		
+		RepoTestUtil.createTenant(tenantBroadcom, tenantBroadcomDesc);
+		OrganizationDto org1 = new OrganizationDto(tenantBroadcomOrgESDExtId, tenantBroadcomOrgESDName, tenantBroadcomOrgESDDesc);
+		RepoTestUtil.createOrganization(tenantBroadcom, org1);
+		
+		//Create Users
+		
+		List<UserDto> users = RepoTestUtil.createUsers(tenantBroadcom, org1.getExternalId(), null, 1,1);
+		Assertions.assertNotNull(users);
+		Assertions.assertTrue(users.size() == 1);
+		//USER-EID-1
+		String manager1ExternalId =  users.get(0).getExternalId();
+		
+		users = RepoTestUtil.createUsers(tenantBroadcom, org1.getExternalId(), null, 5,5);
+		Assertions.assertNotNull(users);
+		Assertions.assertTrue(users.size() == 1);
+		//USER-EID-5
+		String owner1ExternalId =  users.get(0).getExternalId();
+		
+			
+		users = RepoTestUtil.createUsers(tenantBroadcom, org1.getExternalId(), manager1ExternalId, 2,4);
+		Assertions.assertNotNull(users);
+		Assertions.assertTrue(users.size() == 3);
+		
+		
+		//Create an Application with resources	
+		//Rally, //USER-EID-5
+		ApplicationDto appRally = new ApplicationDto(appRallyExtId, appRallyName, appRallyDesc, org1.getExternalId(),  owner1ExternalId);
+		RepoTestUtil.createApplication(tenantBroadcom, appRally);
+		
+		
+		List<ResourceResponse> resources = RepoTestUtil.createResources(tenantBroadcom, appRally.getExternalId(),owner1ExternalId, 1, 5);
+		Assertions.assertTrue(resources.size()==5);
+		
+		//Assign Resources to Users
+		String resExternalId = "RES-EID-1";
+		List<String> userExternalIds = new ArrayList<String>();
+		userExternalIds.add("USER-EID-1");
+		userExternalIds.add("USER-EID-2");
+		userExternalIds.add("USER-EID-3");
+		userExternalIds.add("USER-EID-4");
+		RepoTestUtil.linkUsersToResource(tenantBroadcom, resExternalId, userExternalIds);
+		
+		
+		//Verifying Entitlements
+		List<UserResourceEntitlement> entitlements = RepoTestUtil.getUserResourceEntitlementsByTenantNameAndOrgName(tenantBroadcom, tenantBroadcomOrgESDExtId); 
+		Assertions.assertEquals(4, entitlements.size());
+		Assertions.assertNotNull(entitlements.get(0));
+		Assertions.assertEquals(tenantBroadcom, entitlements.get(0).getTenantName());
+		Assertions.assertEquals(tenantBroadcomOrgESDExtId, entitlements.get(0).getOrganization());
+		
+		
+		//Cleanup
+		
+		//Delete Resources
+		String[] resourceExtIds = new String[] {"RES-EID-1","RES-EID-2","RES-EID-3","RES-EID-4","RES-EID-5"};
+		RepoTestUtil.deleteResources(tenantBroadcom, resourceExtIds);;
+		
+		//Delete Applications
+		RepoTestUtil.deleteApplication(tenantBroadcom, appRallyExtId);
+		
+		//Delete Roles
+
+		
+		//Delete Users
+		String[] userExtIds = new String[] {"USER-EID-1","USER-EID-2","USER-EID-3","USER-EID-4","USER-EID-5"};
+		RepoTestUtil.deleteUsers(tenantBroadcom, userExtIds); 
+
+		//Delete Organization
+		RepoTestUtil.deleteOrganization(tenantBroadcom, tenantBroadcomOrgESDExtId);
+		
+		//Delete Tenant
+		RepoTestUtil.deleteTenant(tenantBroadcom);
+
+    }
+    
+    
+	//   @Test  
 	public void testRepositoryCRUDOperations() {
 		
 		
@@ -71,7 +284,7 @@ public class RepositoryServicesTest {
 		ApplicationDto app1 = new ApplicationDto(t1App1ExtId, t1App1Name, t1App1Desc, org1.getExternalId(),  users.get(1).getExternalId());
 		RepoTestUtil.createApplication(tenant1, app1);
 		
-		List<ResourceResponse> resources = RepoTestUtil.createResources(tenant1, app1.getExternalId(), 10);
+		List<ResourceResponse> resources = RepoTestUtil.createResources(tenant1, app1.getExternalId(),"USER-EID-1", 1, 10);
 		Assertions.assertTrue(resources.size()==10);
 		
 		//Link Resources to Parent Resource

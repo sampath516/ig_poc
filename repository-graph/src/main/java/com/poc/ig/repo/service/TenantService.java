@@ -21,6 +21,7 @@ import com.poc.ig.repo.dto.CreateOrganizationRequest;
 import com.poc.ig.repo.dto.CreateOrganizationResponse;
 import com.poc.ig.repo.dto.CreateTenantRequest;
 import com.poc.ig.repo.dto.CreateTenantResponse;
+import com.poc.ig.repo.dto.ApplicationResponse;
 import com.poc.ig.repo.dto.GetTenantResponse;
 import com.poc.ig.repo.dto.ListOrganizationsResponse;
 import com.poc.ig.repo.dto.ListTenantsResponse;
@@ -136,6 +137,13 @@ public class TenantService {
 	public void deleteApplication(@PathVariable String tenantName, @PathVariable String appExternalKey) {
 		appRepo.delete(validateApplication(tenantName, appExternalKey));
 	}
+	
+	
+	@GetMapping(path = "tenants/{tenantName}/applications/{appExternalId}")
+	public ResponseEntity<ApplicationResponse> getApplication(@PathVariable String tenantName, @PathVariable String appExternalId) {
+		return new ResponseEntity<>(new ApplicationResponse(validateApplication(tenantName, appExternalId)), HttpStatus.OK);
+	}
+	
 	
 	private Tenant validateTenant(String tenantName) {
 		Optional<Tenant> tenant = tenantRepo.findByName(tenantName);

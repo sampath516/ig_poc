@@ -14,5 +14,6 @@ public class ResourceRequest implements Serializable {
 	private String externalId;
 	private String name;
 	private String description;
+	private String owner;
 	private String application;
 }

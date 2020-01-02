@@ -69,7 +69,7 @@ public class UserService {
 			Organization org = validateOrganization(tenantName, userIn.getOrganization());
 			User user = new User();
 			user.setExternalId(userIn.getExternalId());
-			user.setUserName(userIn.getUserName());
+			user.setUserName(userIn.getName());
 			user.setFirstName(userIn.getFirstName());
 			user.setLastName(userIn.getLastName());
 			user.setTenant(org.getTenant());

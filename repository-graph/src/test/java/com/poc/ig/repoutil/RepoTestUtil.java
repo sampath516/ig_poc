@@ -30,6 +30,8 @@ import com.poc.ig.repo.test.dto.RoleDto;
 import com.poc.ig.repo.test.dto.RoleResponse;
 import com.poc.ig.repo.test.dto.Tenant;
 import com.poc.ig.repo.test.dto.UserDto;
+import com.poc.ig.repo.test.dto.UserResourceEntitlement;
+import com.poc.ig.repo.test.dto.UserResourceEntitlementResponse;
 
 public class RepoTestUtil {
 
@@ -231,12 +233,12 @@ public class RepoTestUtil {
 		return resOut.getBody();
 	}
 
-	public static List<ResourceResponse> createResources(String tenantName, String app, int count) {
+	public static List<ResourceResponse> createResources(String tenantName, String app,String owner, int start, int end) {
 
 		List<ResourceDto> resources = new ArrayList<ResourceDto>();
 		String prefix = app + "Resource";
-		for (int i = 1; i <= count; i++) {
-			ResourceDto res = new ResourceDto("RES-EID-" + i, "RES-" + i, prefix + i + "Desc", app);
+		for (int i = start; i <= end; i++) {
+			ResourceDto res = new ResourceDto("RES-EID-" + i, "RES-" + i, prefix + i + "Desc", owner, app);
 			resources.add(res);
 		}
 		CreateResourceRequest req = new CreateResourceRequest();
@@ -288,6 +290,24 @@ public class RepoTestUtil {
 		Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
 	}
 	
+	
+	public static void linkUsersToResource(String tenantName, String resExternalId, List<String> userExternalIds) {
+
+		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantName).append("/resources").append("/")
+				.append(resExternalId).append("/users").toString();
+		HttpEntity<List<String>> request = new HttpEntity<List<String>>(userExternalIds, getHeaders());
+		ResponseEntity<ResourceResponse> response = restClient.exchange(uri, HttpMethod.PUT, request, ResourceResponse.class);
+		Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+		Assertions.assertTrue(response.hasBody());
+		Assertions.assertNotNull(response.getBody());
+		Assertions.assertEquals(resExternalId, response.getBody().getExternalId());
+	}
+	
+	
+	
+	
+	
+	
 	public static void linkResourcesToRole(String tenantName, String roleExternalId, List<String> resourceExternalIds) {
 
 		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantName).append("/roles").append("/")
@@ -338,11 +358,31 @@ public class RepoTestUtil {
 		HttpEntity<DeleteResourcesRequest> delReqEntity = new HttpEntity<DeleteResourcesRequest>(delReq, getHeaders());
 		restClient.exchange(uri, HttpMethod.DELETE, delReqEntity, Void.class);
 	}
+	
+	public static void deleteResources(String tenantName, String[] resources) {
+		DeleteResourcesRequest delReq = new DeleteResourcesRequest();
+		for (String res : resources) {
+			delReq.getResources().add(res);
+		}
+		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantName).append("/resources").toString();
+		HttpEntity<DeleteResourcesRequest> delReqEntity = new HttpEntity<DeleteResourcesRequest>(delReq, getHeaders());
+		restClient.exchange(uri, HttpMethod.DELETE, delReqEntity, Void.class);
+	}
 
 	public static void deleteUsers(String tenantName, List<UserDto> users) {
 		DeleteUsersRequest delReq = new DeleteUsersRequest();
 		for (UserDto user : users) {
 			delReq.getUsers().add(user.getExternalId());
+		}
+		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantName).append("/users").toString();
+		HttpEntity<DeleteUsersRequest> delReqEntity = new HttpEntity<DeleteUsersRequest>(delReq, getHeaders());
+		restClient.exchange(uri, HttpMethod.DELETE, delReqEntity, Void.class);
+	}
+	
+	public static void deleteUsers(String tenantName, String[] users) {
+		DeleteUsersRequest delReq = new DeleteUsersRequest();
+		for (String user : users) {
+			delReq.getUsers().add(user);
 		}
 		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantName).append("/users").toString();
 		HttpEntity<DeleteUsersRequest> delReqEntity = new HttpEntity<DeleteUsersRequest>(delReq, getHeaders());
@@ -379,6 +419,23 @@ public class RepoTestUtil {
 		HttpEntity<Tenant> deleteTenantReq = new HttpEntity<Tenant>(getHeaders());
 		restClient.exchange(uri, HttpMethod.DELETE, deleteTenantReq, Tenant.class);
 	}
+	
+	
+	
+	public static List<UserResourceEntitlement>  getUserResourceEntitlementsByTenantNameAndOrgName(String tenantName, String orgName) {
+				
+		String uri = new StringBuilder(tenantBaseUri).append("/").append(tenantName).append("/organizations/").append(orgName).append("/users/").append("resources").toString();
+		HttpEntity<Void> request = new HttpEntity<Void>(getHeaders());
+		ResponseEntity<UserResourceEntitlementResponse> response = restClient.exchange(uri, HttpMethod.GET, request, UserResourceEntitlementResponse.class);
+		Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+		Assertions.assertTrue(response.hasBody());
+		Assertions.assertNotNull(response.getBody());
+		Assertions.assertNotNull(response.getBody().getEntitlements());
+		return response.getBody().getEntitlements();
+	}
+	
+	
+	
 
 	private static HttpHeaders getHeaders() {
 		HttpHeaders headers = new HttpHeaders();

@@ -17,7 +17,7 @@ public class UserDto implements Serializable{
 	private long id;
 	private String externalId;
 	private String tenantName;
-	private String userName;
+	private String name;
 	private String firstName;
 	private String lastName;
 	private String email;
@@ -37,7 +37,7 @@ public class UserDto implements Serializable{
 	public UserDto(String externalId, String userName, String firstName, String lastName, String email, String manager,
 			String organization) {
 		this.externalId = externalId;
-		this.userName = userName;
+		this.name = userName;
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.firstName = firstName;

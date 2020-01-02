@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.poc.ig.repo.dto.CreateResourceRequest;
 import com.poc.ig.repo.dto.CreateResourceResponse;
 import com.poc.ig.repo.dto.DeleteResourcesRequest;
-import com.poc.ig.repo.dto.GetResourceResponse;
 import com.poc.ig.repo.dto.ListResourcesResponse;
 import com.poc.ig.repo.dto.ResourceRequest;
 import com.poc.ig.repo.dto.ResourceResponse;
@@ -29,12 +28,15 @@ import com.poc.ig.repo.dto.UpdateResourceResponse;
 import com.poc.ig.repo.entity.Application;
 import com.poc.ig.repo.entity.Resource;
 import com.poc.ig.repo.entity.Tenant;
+import com.poc.ig.repo.entity.User;
 import com.poc.ig.repo.exception.InvalidApplicationException;
 import com.poc.ig.repo.exception.InvalidResourceException;
 import com.poc.ig.repo.exception.InvalidTenantException;
+import com.poc.ig.repo.exception.InvalidUserException;
 import com.poc.ig.repo.repository.ApplicationRepository;
 import com.poc.ig.repo.repository.ResourceRepository;
 import com.poc.ig.repo.repository.TenantRepository;
+import com.poc.ig.repo.repository.UserRepository;
 
 @RestController
 @RequestMapping(value = "ig/repo/v1/tenants/{tenantName}/", produces = "application/json", consumes = "application/json")
@@ -47,6 +49,9 @@ public class ResourceService {
 	
 	@Autowired
 	private TenantRepository tenantRepo;
+	
+	@Autowired
+	private UserRepository userRepo;
 
 	@PostMapping(path = "resources")
 	@ResponseStatus(HttpStatus.CREATED)
@@ -54,17 +59,26 @@ public class ResourceService {
 		List<ResourceRequest> resourcesIn = createResourceReq.getResources();
 		List<Resource> resourceEntities = new ArrayList<Resource>();
 		for(ResourceRequest resIn : resourcesIn) {
+			User owner = validateUser(tenantName, resIn.getOwner());
 			Application app = validateApplication(tenantName, resIn.getApplication());			
+			
 			Resource resource = new Resource();
+			
 			resource.setExternalId(resIn.getExternalId());
-			resource.setApplication(app);
-			app.getResources().add(resource);
 			resource.setName(resIn.getName());
 			resource.setDescription(resIn.getDescription());
+			
+			resource.setOwner(owner);
+			owner.getOwnedResources().add(resource);
+			
+			resource.setApplication(app);
+			app.getResources().add(resource);
+
 			resource.setTenant(app.getTenant());
+			
 			resource = resourceRepo.save(resource);
 			resourceEntities.add(resource);
-			appRepo.save(app);
+		//	appRepo.save(app);
 		}		
 			
 		return new CreateResourceResponse(resourceEntities);
@@ -138,6 +152,20 @@ public class ResourceService {
 		resourceRepo.save(parentResource);
 	}
 	
+	
+	@PutMapping(path = "resources/{resExternalId}/users")
+	public ResponseEntity<ResourceResponse> linkUsers(@PathVariable String tenantName, @PathVariable String resExternalId, @RequestBody List<String> users) {
+		Resource resource = validateResource(tenantName, resExternalId);
+
+		for (String user : users) {
+			User userEntity = validateUser(tenantName, user);
+			resource.getUsers().add(userEntity);
+			userEntity.getResources().add(resource);
+			userRepo.save(userEntity);
+		}
+		return new ResponseEntity<>(new ResourceResponse(resourceRepo.save(resource)), HttpStatus.OK);
+	}
+	
 
 	private Resource validateResource(String tenantName, String resourceExternalId) {
 		Optional<Resource> resource = resourceRepo.findByTenantNameAndResourceExternalId(tenantName, resourceExternalId);
@@ -179,5 +207,13 @@ public class ResourceService {
 			throw new InvalidTenantException("Invalid Tenant: " + tenantName);
 		}
 		
+	}
+	private User validateUser(String tenantName, String userExternalId) {
+		Optional<User> user = userRepo.findByTenantNameAndUserExternalId(tenantName, userExternalId);
+		if (user.isPresent()) {
+			return user.get();
+		} else {
+			throw new InvalidUserException("Invalid User(" + tenantName + ", " + userExternalId + ")");
+		}
 	}
 }

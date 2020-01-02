@@ -10,7 +10,8 @@ import com.poc.ig.repo.entity.Application;
 
 public interface ApplicationRepository extends Neo4jRepository<Application, Long> {
 
-	@Query("MATCH (app: application) -[r:APP_BELONGS_TO_TEN]->(ten: tenant) WHERE ten.name=$tenantName AND app.externalId = $appExternalId RETURN app, r, ten")
+
+	@Query("MATCH (app: application) -[r1:APP_BELONGS_TO_TEN]->(ten: tenant) MATCH(app)<-[r2:OWNER_OF_APP]-(owner:user)  WHERE ten.name = $tenantName AND app.externalId = $appExternalId RETURN app, r1, ten, r2, owner")
 	public Optional<Application> findByTenantNameAndAppExternalId(@Param("tenantName") String tenantName, @Param("appExternalId") String appExternalId);
 
 }

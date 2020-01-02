@@ -18,10 +18,9 @@ import lombok.Setter;
 @Setter
 public class UserResponse implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private long id;
 	private String externalId;
 	private String tenantName;
-	private String userName;
+	private String name;
 	private String firstName;
 	private String lastName;
 	private String email;
@@ -34,29 +33,28 @@ public class UserResponse implements Serializable {
 	private LocalDateTime updatedAt;
 
 	public UserResponse(User user) {
-		this.id = user.getId();
 		this.externalId = user.getExternalId();
 		this.tenantName = user.getTenant().getName();
-		this.userName = user.getUserName();
+		this.name = user.getUserName();
 		this.firstName = user.getFirstName();
 		this.lastName = user.getLastName();
 		this.email = user.getEmail();
 		if (user.getManager() != null) {
-			this.manager = user.getManager().getUserName();
+			this.manager = user.getManager().getExternalId();
 		}
 		if(user.getOrganization() != null) {
-			this.organization = user.getOrganization().getName();
+			this.organization = user.getOrganization().getExternalId();
 		}		
 
 		if (user.getRoles() != null) {
 			for (Role role : user.getRoles()) {
-				this.roles.add(new RoleDto(role.getId(), role.getExternalId(), role.getName()));
+				this.roles.add(new RoleDto(role.getExternalId(), role.getName()));
 			}
 		}
 		
 		if(user.getResources() != null) {
 			for(Resource res : user.getResources()) {
-				this.resources.add(new ResourceDto(res.getId(), res.getExternalId(), res.getName()));
+				this.resources.add(new ResourceDto(res.getExternalId(), res.getName()));
 			}
 		}
 
@@ -68,7 +66,6 @@ public class UserResponse implements Serializable {
 	@Getter
 	@Setter
 	public static class RoleDto {
-		private long id;
 		private String externalId;
 		private String name;
 
@@ -76,8 +73,7 @@ public class UserResponse implements Serializable {
 
 		}
 
-		public RoleDto(long id, String externalId, String name) {
-			this.id = id;
+		public RoleDto(String externalId, String name) {
 			this.externalId = externalId;
 			this.name = name;
 		}
@@ -87,7 +83,6 @@ public class UserResponse implements Serializable {
 	@Getter
 	@Setter
 	public static class ResourceDto {
-		private long id;
 		private String externalId;
 		private String name;
 
@@ -95,8 +90,7 @@ public class UserResponse implements Serializable {
 
 		}
 
-		public ResourceDto(long id, String externalId, String name) {
-			this.id = id;
+		public ResourceDto(String externalId, String name) {
 			this.externalId = externalId;
 			this.name = name;
 		}

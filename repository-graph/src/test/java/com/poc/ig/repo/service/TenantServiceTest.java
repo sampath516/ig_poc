@@ -95,6 +95,7 @@ public class TenantServiceTest {
 
 		organizations = listOrganizations(abcTenant.getName());
 		Assertions.assertEquals(1, organizations.size());
+		deleteOrganization(abcTenant.getName(), organizations.get(0).getExternalId());
 		deleteTenant(abcTenant.getName());
 
 
