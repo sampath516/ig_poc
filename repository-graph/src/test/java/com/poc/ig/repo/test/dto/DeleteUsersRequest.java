@@ -12,7 +12,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class DeleteUsersRequest implements Serializable{
+public class DeleteUsersRequest implements Serializable{ 
 	private static final long serialVersionUID = 1L;
 	private List<String> users = new ArrayList<String>();
 

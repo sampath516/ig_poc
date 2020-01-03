@@ -1,4 +1,4 @@
-package com.poc.ig.certification;
+package com.poc.ig;
 
 import org.neo4j.ogm.id.IdStrategy;
 

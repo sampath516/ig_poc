@@ -2,11 +2,13 @@ package com.poc.ig;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 import org.springframework.data.neo4j.annotation.EnableNeo4jAuditing;
 import org.springframework.data.neo4j.repository.config.EnableNeo4jRepositories;
 
 @SpringBootApplication
 @EnableNeo4jAuditing
+@EnableEurekaClient
 @EnableNeo4jRepositories(basePackages = "com.poc.ig.repo.repository")
 public class RepositoryGraphApplication {
 

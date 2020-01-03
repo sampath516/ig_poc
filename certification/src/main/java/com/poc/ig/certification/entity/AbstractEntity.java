@@ -7,7 +7,7 @@ import org.neo4j.ogm.annotation.Id;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
-import com.poc.ig.certification.CertificationKeyGenerator;
+import com.poc.ig.CertificationKeyGenerator;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;

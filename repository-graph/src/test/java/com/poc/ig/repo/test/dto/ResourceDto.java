@@ -12,7 +12,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class ResourceDto implements Serializable {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L; 
 	private String externalId;
 	private String name;
 	private String description;

@@ -1,6 +1,7 @@
 package com.poc.ig.certification.client;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -27,7 +28,9 @@ public class RepositoryRestClient {
 	@Autowired
 	RestTemplate restTemplate;
 	
-	private static final String  TENANT_SERVICE_BASE_URL = "http://localhost:8081/ig/repo/v1/tenants";
+	//private static final String  TENANT_SERVICE_BASE_URL = "http://localhost:8081/ig/repo/v1/tenants";
+	
+	private static final String  TENANT_SERVICE_BASE_URL = "http://repository-graph/ig/repo/v1/tenants";
 
 	public UserResponse getUser(String tenantName, String userExternalId) {
 		String uri = new StringBuilder(TENANT_SERVICE_BASE_URL).append("/").append(tenantName).append("/users/").append(userExternalId).toString();
@@ -62,6 +65,15 @@ public class RepositoryRestClient {
 							+ ", Organization:  " + organizationName + ")");
 		}
 		return response.getBody();
+	}
+	
+	
+	public void unlinkResourcesFromUser(String tenantName, String userExternalId, List<String> resourceExternalIds) {
+
+		String uri = new StringBuilder(TENANT_SERVICE_BASE_URL).append("/").append(tenantName).append("/users").append("/")
+				.append(userExternalId).append("/resources").toString();
+		HttpEntity<List<String>> request = new HttpEntity<List<String>>(resourceExternalIds, getHeaders());
+		restTemplate.exchange(uri, HttpMethod.DELETE, request, Void.class);
 	}
 	
 	private HttpHeaders getHeaders() {

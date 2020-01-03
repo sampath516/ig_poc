@@ -5,6 +5,9 @@ import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.web.client.RestTemplate;
 
 import com.poc.ig.certification.entity.Certification.CertificationType;
@@ -26,8 +29,8 @@ import com.poc.ig.certification.util.RepositoryClientUtil;
 
 
 
-//@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-public class CertificationServiceTest {
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+public class CertificationServiceTests {
 	
 	private RestTemplate restClient = new RestTemplate();
 	private static String CERTIFICTION_TENANT_BASE_URI = "http://localhost:%d/ig/certification/v1/tenants";
@@ -42,8 +45,9 @@ public class CertificationServiceTest {
 		
 	}
 
- //  @LocalServerPort   
-	private int port=8084;
+	@LocalServerPort   
+		private int port;
+		//	private int port=8084;
     
 //	@Test
     public void testCertifications() {
@@ -111,7 +115,7 @@ public class CertificationServiceTest {
     	
     }
 	
-	@Test
+//	@Test
     public void testCertifications_v1() {
 		
 		String tenant1 = "Broadcom";

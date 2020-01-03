@@ -6,10 +6,13 @@ import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.web.client.RestTemplate;
 
-import com.poc.ig.repo.test.dto.ApplicationDto;
-import com.poc.ig.repo.test.dto.OrganizationDto;
+import com.poc.ig.repo.test.dto.ApplicationDto; 
+import com.poc.ig.repo.test.dto.OrganizationDto; 
 import com.poc.ig.repo.test.dto.ResourceResponse;
 import com.poc.ig.repo.test.dto.RoleResponse;
 import com.poc.ig.repo.test.dto.UserDto;
@@ -17,7 +20,7 @@ import com.poc.ig.repo.test.dto.UserResourceEntitlement;
 import com.poc.ig.repoutil.RepoTestUtil; 
 
 
-//@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 public class RepositoryServicesTest {
 
 	private RestTemplate restClient = new RestTemplate();
@@ -31,10 +34,11 @@ public class RepositoryServicesTest {
 		RepoTestUtil.setTenantBaseUri(tenantBaseUri);
 	}
 
-//    @LocalServerPort 
-	private int port=8081;
+ @LocalServerPort 
+// 	private int port=8081;  
+   	   private int port;
 	
-	//@Test
+//	@Test
     public void prepareCertificationDataAndTestEntitlements() {
 		String tenantBroadcom = "Broadcom";
 		String tenantBroadcomDesc = "Broadcom";
@@ -244,12 +248,12 @@ public class RepositoryServicesTest {
 		RepoTestUtil.deleteOrganization(tenantBroadcom, tenantBroadcomOrgESDExtId);
 		
 		//Delete Tenant
-		RepoTestUtil.deleteTenant(tenantBroadcom);
+		RepoTestUtil.deleteTenant(tenantBroadcom); 
 
     }
     
     
-	//   @Test  
+ @Test  
 	public void testRepositoryCRUDOperations() {
 		
 		
