@@ -5,9 +5,6 @@ import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.web.client.RestTemplate;
 
 import com.poc.ig.certification.entity.Certification.CertificationType;
@@ -29,7 +26,7 @@ import com.poc.ig.certification.util.RepositoryClientUtil;
 
 
 
-@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+//@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 public class CertificationServiceTests {
 	
 	private RestTemplate restClient = new RestTemplate();
@@ -45,9 +42,9 @@ public class CertificationServiceTests {
 		
 	}
 
-	@LocalServerPort   
-		private int port;
-		//	private int port=8084;
+//	@LocalServerPort   
+	//	private int port;
+			private int port=8084;
     
 //	@Test
     public void testCertifications() {
@@ -115,7 +112,7 @@ public class CertificationServiceTests {
     	
     }
 	
-//	@Test
+	@Test
     public void testCertifications_v1() {
 		
 		String tenant1 = "Broadcom";
@@ -127,9 +124,9 @@ public class CertificationServiceTests {
 		
 	
 		//Create a Tenant and Organization		
-		CertificationTestUtil.createTenant(tenant1, tenant1Desc);
-		OrganizationDto org1 = new OrganizationDto(t1Org1ExtId, t1Org1Name, t1Org1Desc);
-		CertificationTestUtil.createOrganization(tenant1, org1);
+//		CertificationTestUtil.createTenant(tenant1, tenant1Desc);
+//		OrganizationDto org1 = new OrganizationDto(t1Org1ExtId, t1Org1Name, t1Org1Desc);
+//		CertificationTestUtil.createOrganization(tenant1, org1);
 		
 		//Create Certification
 		String certName = "Cert-1";

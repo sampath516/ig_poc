@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.poc.ig.certification.client.RepositoryRestClient;
 import com.poc.ig.certification.dto.ApplicationResponse;
 import com.poc.ig.certification.dto.CertificationResponse;
@@ -46,6 +47,10 @@ import com.poc.ig.certification.entity.Review.ReviewLogic;
 import com.poc.ig.certification.entity.Review.ReviewState;
 import com.poc.ig.certification.entity.User;
 import com.poc.ig.certification.entity.UserPrivilegesResourceEntitlement;
+import com.poc.ig.certification.events.Events;
+import com.poc.ig.certification.events.dto.CertificationDto;
+import com.poc.ig.certification.events.dto.Event;
+import com.poc.ig.certification.events.producer.CertificationEventsProducer;
 import com.poc.ig.certification.repository.ApplicationRepository;
 import com.poc.ig.certification.repository.CertificationRepository;
 import com.poc.ig.certification.repository.EntitlementRepository;
@@ -91,6 +96,12 @@ public class CertificationService {
 	@Autowired
 	UserPrivilegesResourceEntitlementRepository userPrevResEntRepo;
 	
+	@Autowired
+	CertificationEventsProducer certEventsProducer;
+	
+	@Autowired
+	ObjectMapper jsonObjectMapper;
+	
 
 
 	@PostMapping(path = "certifications")
@@ -133,7 +144,7 @@ public class CertificationService {
 			ownerEntity = managerEntity;
 			manager = managerDto.getManager();			
 		}	
-
+		certEventsProducer.send(new Event<CertificationDto>(Events.NEW_CERTITICATION_EVENT, new CertificationDto(cert), jsonObjectMapper));
 		return new CertificationResponse(cert);
 	}
 

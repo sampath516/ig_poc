@@ -12,7 +12,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class ApplicationDto implements Serializable {
+public class ApplicationDto implements Serializable { 
 	private static final long serialVersionUID = 1L;
 	private int id;
 	private String externalId;

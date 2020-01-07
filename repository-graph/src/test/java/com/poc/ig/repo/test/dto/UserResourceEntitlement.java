@@ -12,7 +12,7 @@ import lombok.Setter;
 @Setter
 @Getter
 @NoArgsConstructor
-public class UserResourceEntitlement  implements  Serializable{
+public class UserResourceEntitlement  implements  Serializable{ 
 	private static final long serialVersionUID = 1L;
 	
 	private String tenantName;	

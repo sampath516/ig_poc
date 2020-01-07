@@ -24,12 +24,20 @@ public interface UserRepository extends Neo4jRepository<User, Long> {
 	@Query("match (u:user)-[r1:USER_ASSIGNED_RES]->(res:resource) "
 		+ "match(manager:user)-[r2:MANAGER_OF]-(u) "
 		+ "match(owner:user)-[r3:OWNER_OF_RES]->(res) "
-		+ "match(u:user)-[r4:USER_BELONGS_TO_TEN]->(t:tenant) "
+		+ "match(u)-[r4:USER_BELONGS_TO_TEN]->(t:tenant) "
 		+ "match(res)-[r5:RES_BELONGS_TO_TEN]->(t)  "
 		+ "match(u)-[r6:USER_BELONGS_TO_ORG]->(org:organization) "
 		+ "match(res)-[r7:RES_BELONGS_APP]->(app:application) "
 		+ "where t.name = $tenantName and org.name = $orgName "
 		+ "return u, r1, res, r2, manager, r3, owner,r4,t,r5,r6,org,r7, app")
 	public List<User> findAllUserResourceEntitlementsByTenantNameAndOrganizationName(@Param("tenantName") String tenantName, @Param("orgName") String orgName);
+
+	@Query("match (u:user)-[r1:USER_ASSIGNED_RES]->(res:resource) " + 
+			"match(u)-[r2:USER_BELONGS_TO_TEN]->(t:tenant) " + 
+			"match(res)-[r3:RES_BELONGS_TO_TEN]->(t) " + 
+			"match(u)-[r4:USER_BELONGS_TO_ORG]->(org:organization) " + 
+			"where t.name = $tenantName and org.name = $orgName \r\n" + 
+			"return count(r1)")
+	public int findUserResourceEntitlementsCountByTenantNameAndOrganizationName(@Param("tenantName") String tenantName, @Param("orgName") String orgName);
 
 }

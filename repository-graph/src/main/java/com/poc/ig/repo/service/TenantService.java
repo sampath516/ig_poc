@@ -32,6 +32,7 @@ import com.poc.ig.repo.entity.Application;
 import com.poc.ig.repo.entity.Organization;
 import com.poc.ig.repo.entity.Tenant;
 import com.poc.ig.repo.entity.User;
+import com.poc.ig.repo.events.producer.AdminEventsProducer;
 import com.poc.ig.repo.exception.InvalidApplicationException;
 import com.poc.ig.repo.exception.InvalidOrganizationException;
 import com.poc.ig.repo.exception.InvalidTenantException;
@@ -57,11 +58,16 @@ public class TenantService {
 	
 	@Autowired
 	private UserRepository userRepo;
+	
+	@Autowired
+	private AdminEventsProducer adminEventsProducer;
 
 	@PostMapping(path = "tenants")
 	@ResponseStatus(HttpStatus.CREATED)
 	public CreateTenantResponse createTenant(@RequestBody CreateTenantRequest createTenantReq) {
-		return new CreateTenantResponse(tenantRepo.save(createTenantReq.tenant()));
+		Tenant tenant = tenantRepo.save(createTenantReq.tenant());
+		adminEventsProducer.send(adminEventsProducer.prepareNewTenantEvent(tenant));
+		return new CreateTenantResponse(tenant);
 	}
 
 	@GetMapping(path = "tenants/{tenantName}")
@@ -103,7 +109,9 @@ public class TenantService {
 		Tenant tenant = validateTenant(tenantName);
 		Organization org = createOrganizationReq.getOrganization();
 		org.setTenant(tenant);
-		return new ResponseEntity<>(new CreateOrganizationResponse(orgRepo.save(org)), HttpStatus.CREATED);
+		org = orgRepo.save(org);
+		adminEventsProducer.send(adminEventsProducer.prepareNewOrganizationEvent(org));
+		return new ResponseEntity<>(new CreateOrganizationResponse(org), HttpStatus.CREATED);
 	}
 
 	@DeleteMapping(path = "tenants/{tenantName}/organizations/{orgExternalKey}")

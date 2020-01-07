@@ -73,6 +73,16 @@ public class ServicesUtil {
 		}
 	}
 	
+	public static Certification findCertificationById(CertificationRepository certRepo, String tenantName, String certificationName, int depth) {
+		String certificationId = tenantName+certificationName;
+		Optional<Certification> cert = certRepo.findById(certificationId.toLowerCase(), depth);
+		if (cert.isPresent()) {
+			return cert.get();
+		} else {
+			throw new InvalidCertificationException("Invalid Certification(" + tenantName + ", " + certificationName + ")");
+		}
+	}
+	
 	public static User getUserByTenantNameAndExternalId(UserRepository userRepo, String tenantName, String userExternalId) {
 		Optional<User> userTemp = userRepo.findByExternalId(userExternalId);
 		User user = null;

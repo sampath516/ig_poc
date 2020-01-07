@@ -1,6 +1,6 @@
 package com.poc.ig.repoutil;
 
-import java.util.ArrayList;
+import java.util.ArrayList; 
 import java.util.Arrays;
 import java.util.List;
 
@@ -34,7 +34,7 @@ import com.poc.ig.repo.test.dto.UserResourceEntitlement;
 import com.poc.ig.repo.test.dto.UserResourceEntitlementResponse;
 
 public class RepoTestUtil {
-
+ 
 	private static RestTemplate restClient;
 	private static String tenantBaseUri;
 

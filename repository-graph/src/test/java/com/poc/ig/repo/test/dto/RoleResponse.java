@@ -13,7 +13,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class RoleResponse implements Serializable {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L; 
 	private long id;
 	private String externalId;
 	private String tenant;
