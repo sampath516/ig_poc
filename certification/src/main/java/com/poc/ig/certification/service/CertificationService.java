@@ -39,6 +39,7 @@ import com.poc.ig.certification.entity.Certification;
 import com.poc.ig.certification.entity.Certification.CertificationState;
 import com.poc.ig.certification.entity.Entitlement;
 import com.poc.ig.certification.entity.Entitlement.EntitlementState;
+import com.poc.ig.certification.entity.Entitlement.EntitlementType;
 import com.poc.ig.certification.entity.Organization;
 import com.poc.ig.certification.entity.Resource;
 import com.poc.ig.certification.entity.Review;
@@ -51,6 +52,7 @@ import com.poc.ig.certification.events.Events;
 import com.poc.ig.certification.events.dto.CertificationDto;
 import com.poc.ig.certification.events.dto.Event;
 import com.poc.ig.certification.events.producer.CertificationEventsProducer;
+import com.poc.ig.certification.events.producer.EntitlementsRejectionProducer;
 import com.poc.ig.certification.repository.ApplicationRepository;
 import com.poc.ig.certification.repository.CertificationRepository;
 import com.poc.ig.certification.repository.EntitlementRepository;
@@ -88,20 +90,23 @@ public class CertificationService {
 	private EntitlementRepository entmtRepo;
 	
 	@Autowired
-	RepositoryRestClient repositoryClient;
+	private RepositoryRestClient repositoryClient;
 	
 	@Autowired
-	ReviewRepository reviewRepo;
+	private ReviewRepository reviewRepo;
+	
+
+	@Autowired
+	private CertificationEventsProducer certEventsProducer;
 	
 	@Autowired
-	UserPrivilegesResourceEntitlementRepository userPrevResEntRepo;
+	private ObjectMapper jsonObjectMapper;
 	
 	@Autowired
-	CertificationEventsProducer certEventsProducer;
+	private EntitlementsRejectionProducer entitlementsRejProducer; 
 	
 	@Autowired
-	ObjectMapper jsonObjectMapper;
-	
+	private UserPrivilegesResourceEntitlementRepository userPrevResEntitlementRepo;
 
 
 	@PostMapping(path = "certifications")
@@ -235,19 +240,25 @@ public class CertificationService {
 			}
 			reviews = reviewRepo.saveAll(reviews);
 		}
-		updateEntitlements(reviews);
+		updateEntitlements(tenantName, reviews);
 	}
 	
-	private void updateEntitlements(Iterable<Review> reviews) {
+	private void updateEntitlements(String tenantName, Iterable<Review> reviews) {
 		List<Entitlement> entmts = new ArrayList<Entitlement>();
+		List<Entitlement> rejectedEntitlements = new ArrayList<Entitlement>();
 		for (Review r : reviews) {
-			Entitlement entmt = ServicesUtil.findEntitlement(entmtRepo, r.getEntitlement().getKey());
+			Entitlement entmt = null;
+			if(r.getEntitlement().getEntitlementType().equals(EntitlementType.USER_RESOURCE)) {
+				entmt = ServicesUtil.findUserPrevResEntitlement(userPrevResEntitlementRepo, r.getEntitlement().getKey());
+			}
+			
 			Set<Review> allEntitlementReviews = entmt.getReviews();
 			if (r.getLogic().equals(ReviewLogic.AND)) {
 				if (r.getActionType().equals(ActionType.REJECT)) {
 					entmt.setActionType(com.poc.ig.certification.entity.Entitlement.ActionType.REJECT);
 					entmt.setState(EntitlementState.CLOSED);
 					entmts.add(entmt);
+					rejectedEntitlements.add(entmt);
 				} else if (r.getActionType().equals(ActionType.APPROVE) && allApproved(allEntitlementReviews)) {
 					entmt.setActionType(com.poc.ig.certification.entity.Entitlement.ActionType.APPROVE);
 					entmt.setState(EntitlementState.CLOSED);
@@ -264,11 +275,14 @@ public class CertificationService {
 					entmt.setActionType(com.poc.ig.certification.entity.Entitlement.ActionType.REJECT);
 					entmt.setState(EntitlementState.CLOSED);
 					entmts.add(entmt);
+					rejectedEntitlements.add(entmt);
 				}
+				
 
 			}
 		}
 		entmtRepo.saveAll(entmts);
+		entitlementsRejProducer.sendEvents(tenantName, rejectedEntitlements, jsonObjectMapper);
 	}
 	
 	private boolean allApproved(Set<Review> reviews) {

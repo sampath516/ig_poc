@@ -19,10 +19,7 @@ import com.poc.ig.certification.test.dto.ReviewRequest.Action;
 import com.poc.ig.certification.test.dto.ReviewRequest.ActionType;
 import com.poc.ig.certification.test.dto.ReviewResponse;
 import com.poc.ig.certification.test.dto.UserDto;
-import com.poc.ig.certification.test.dto.UserResourceEntitlementRequest;
-import com.poc.ig.certification.test.dto.UserResourceEntitlementResponse;
 import com.poc.ig.certification.util.CertificationTestUtil;
-import com.poc.ig.certification.util.RepositoryClientUtil;
 
 
 
@@ -116,17 +113,8 @@ public class CertificationServiceTests {
     public void testCertifications_v1() {
 		
 		String tenant1 = "Broadcom";
-		String tenant1Desc = "Broadcom";
-		
 		String t1Org1ExtId = "ESD";
-		String t1Org1Name = "ESD";
-		String t1Org1Desc = "Enterprise Service Division";
-		
-	
-		//Create a Tenant and Organization		
-//		CertificationTestUtil.createTenant(tenant1, tenant1Desc);
-//		OrganizationDto org1 = new OrganizationDto(t1Org1ExtId, t1Org1Name, t1Org1Desc);
-//		CertificationTestUtil.createOrganization(tenant1, org1);
+
 		
 		//Create Certification
 		String certName = "Cert-1";
@@ -141,16 +129,12 @@ public class CertificationServiceTests {
 		request.setOrganization(t1Org1ExtId);
 		request.setOwner(CertOwner);
 		CertificationTestUtil.createCertification(tenant1, request);	
-		
-		//Get Entitlements from Repository
-		UserResourceEntitlementResponse entitlementsResponse =  RepositoryClientUtil.getUserResourceEntitlements(tenant1, t1Org1ExtId);
-		
-		//Create reviews in Certification
-		UserResourceEntitlementRequest userResourceEntitlementRequest = new UserResourceEntitlementRequest();
-		userResourceEntitlementRequest.setTenantName(tenant1);
-		userResourceEntitlementRequest.setCertification(certName);
-		userResourceEntitlementRequest.getEntitlements().addAll(entitlementsResponse.getEntitlements());
-		CertificationTestUtil.createUserResourceEntitlements(userResourceEntitlementRequest);
+		try {
+			Thread.sleep(10*1000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		//Get open reviews
 		String reviewer = "USER-EID-1";
@@ -168,7 +152,7 @@ public class CertificationServiceTests {
 		} 
 		Action action = new Action();
 		action.setComments("Approved from JUnit");
-		action.setType(ActionType.APPROVE);
+		action.setType(ActionType.REJECT);
 		
 		revReq.setAction(action);
 		
@@ -184,7 +168,7 @@ public class CertificationServiceTests {
 		// Approve/Reject reviews and submit
 		revReq = new ReviewRequest();
 		for(ReviewResponse r: reviews) {
-			if(r.getPrimaryEntity().getExternalId().equals("USER-EID-2")) {
+			if(r.getPrimaryEntity().getExternalId().equals("USER-EID-4")) {
 				revReq.getReviewIds().add(r.getReviewId());
 			}
 		} 

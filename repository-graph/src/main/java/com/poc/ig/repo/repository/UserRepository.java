@@ -36,8 +36,15 @@ public interface UserRepository extends Neo4jRepository<User, Long> {
 			"match(u)-[r2:USER_BELONGS_TO_TEN]->(t:tenant) " + 
 			"match(res)-[r3:RES_BELONGS_TO_TEN]->(t) " + 
 			"match(u)-[r4:USER_BELONGS_TO_ORG]->(org:organization) " + 
-			"where t.name = $tenantName and org.name = $orgName \r\n" + 
+			"where t.name = $tenantName and org.name = $orgName " + 
 			"return count(r1)")
 	public int findUserResourceEntitlementsCountByTenantNameAndOrganizationName(@Param("tenantName") String tenantName, @Param("orgName") String orgName);
+	
+	@Query("match (u:user)-[r1:USER_ASSIGNED_RES]->(res:resource) " + 
+			"match(u)-[r2:USER_BELONGS_TO_TEN]->(t:tenant) " + 
+			"match(res)-[r3:RES_BELONGS_TO_TEN]->(t) " + 
+			"where t.name = $tenantName and u.externalId = $userExternalId and res.externalId= $resourceExternalId " + 
+			"delete r1 ")
+	public void removeUserResourceRelationship(@Param("tenantName") String tenantName, @Param("userExternalId") String userExternalId, @Param("resourceExternalId") String resourceExternalId);
 
 }

@@ -18,6 +18,7 @@ import com.poc.ig.certification.dto.UserResponse;
 import com.poc.ig.certification.entity.Application;
 import com.poc.ig.certification.entity.Certification;
 import com.poc.ig.certification.entity.Entitlement.EntitlementState;
+import com.poc.ig.certification.entity.Entitlement.EntitlementType;
 import com.poc.ig.certification.entity.Resource;
 import com.poc.ig.certification.entity.Review;
 import com.poc.ig.certification.entity.Review.ReviewState;
@@ -262,6 +263,7 @@ public class UserResourceEntitlementsConsumer {
 		entitlement.setCertificationName(cert.getName());
 
 		entitlement.setCertification(cert);
+		entitlement.setEntitlementType(EntitlementType.USER_RESOURCE);
 
 		entitlement.setPrimaryEntity(primaryEntity);
 		entitlement.setSecondaryEntity(secondaryEntity);

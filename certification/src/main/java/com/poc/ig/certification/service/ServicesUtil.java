@@ -11,6 +11,7 @@ import com.poc.ig.certification.entity.Organization;
 import com.poc.ig.certification.entity.Resource;
 import com.poc.ig.certification.entity.Tenant;
 import com.poc.ig.certification.entity.User;
+import com.poc.ig.certification.entity.UserPrivilegesResourceEntitlement;
 import com.poc.ig.certification.exception.InvalidCertificationException;
 import com.poc.ig.certification.exception.InvalidOrganizationException;
 import com.poc.ig.certification.exception.InvalidResourceException;
@@ -21,6 +22,7 @@ import com.poc.ig.certification.repository.EntitlementRepository;
 import com.poc.ig.certification.repository.OrganizationRepository;
 import com.poc.ig.certification.repository.ResourceRepository;
 import com.poc.ig.certification.repository.TenantRepository;
+import com.poc.ig.certification.repository.UserPrivilegesResourceEntitlementRepository;
 import com.poc.ig.certification.repository.UserRepository;
 
 public class ServicesUtil {
@@ -139,6 +141,15 @@ public class ServicesUtil {
 	
 	public static Entitlement findEntitlement(EntitlementRepository entmtRepo, String entitlementkey) {
 		Optional<Entitlement> entmtContainer = entmtRepo.findById(entitlementkey, 1);
+		Entitlement entmt = null;
+		if (entmtContainer.isPresent()) {
+			entmt = entmtContainer.get();
+		}
+		return entmt;
+	}
+	
+	public static Entitlement findUserPrevResEntitlement(UserPrivilegesResourceEntitlementRepository entmtRepo, String entitlementkey) {
+		Optional<UserPrivilegesResourceEntitlement> entmtContainer = entmtRepo.findById(entitlementkey, 1);
 		Entitlement entmt = null;
 		if (entmtContainer.isPresent()) {
 			entmt = entmtContainer.get();

@@ -47,5 +47,17 @@ public class Event<T> {
 		}
 		return result;
 	}
+	
+	public T getEventData(ObjectMapper jsonMapper, Class<T> valueType) {
+		T result ;
+		try {
+			result = jsonMapper.readValue(data, valueType);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace(); // TODO
+			throw new JsonParseException(e);
+		}
+		return result;
+	}
+
 
 }
