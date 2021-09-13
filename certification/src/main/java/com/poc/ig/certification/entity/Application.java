@@ -16,6 +16,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @NodeEntity(label = "application")
 public class Application  extends AbstractEntity  {
+	
+	private String type;
 		
 	@Relationship(type = "APP_BELONGS_TO_TEN", direction = Relationship.OUTGOING)
 	private Tenant tenant;

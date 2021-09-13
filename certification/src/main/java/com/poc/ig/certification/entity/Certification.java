@@ -63,7 +63,7 @@ public class Certification  extends AbstractEntity  {
 
 	}
 
-	public static enum CertificationType {
+	public static enum CertificationType { 
 		USER_PREVILEGES(1), ROLE(2), RESOURCE(3), ACCOUNT(4);
 
 		private int value;

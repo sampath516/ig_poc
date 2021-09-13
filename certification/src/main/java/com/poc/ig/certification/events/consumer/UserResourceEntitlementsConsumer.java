@@ -17,6 +17,7 @@ import com.poc.ig.certification.dto.UserResourceEntitlement.UserDto;
 import com.poc.ig.certification.dto.UserResponse;
 import com.poc.ig.certification.entity.Application;
 import com.poc.ig.certification.entity.Certification;
+import com.poc.ig.certification.entity.Certification.CertificationState;
 import com.poc.ig.certification.entity.Entitlement.EntitlementState;
 import com.poc.ig.certification.entity.Entitlement.EntitlementType;
 import com.poc.ig.certification.entity.Resource;
@@ -26,6 +27,7 @@ import com.poc.ig.certification.entity.User;
 import com.poc.ig.certification.entity.UserPrivilegesResourceEntitlement;
 import com.poc.ig.certification.events.Events;
 import com.poc.ig.certification.events.KafkaTopics;
+import com.poc.ig.certification.events.dto.EntitlementsPublishedEventDto;
 import com.poc.ig.certification.events.dto.Event;
 import com.poc.ig.certification.events.dto.UserResourceEntitlements;
 import com.poc.ig.certification.repository.ApplicationRepository;
@@ -91,7 +93,8 @@ public class UserResourceEntitlementsConsumer {
 
 				// Secondary Entity - Resource
 				Resource secondaryEntity = mapToResourceEntity(entmt.getSecondaryEntity(), cert);
-				setResourceOwner(secondaryEntity, entmt.getSecondaryEntity().getOwner(), cert);
+				String owner = entmt.getSecondaryEntity().getOwner() == null || entmt.getSecondaryEntity().getOwner().isEmpty() ? "imadmin" : entmt.getSecondaryEntity().getOwner() ;
+				setResourceOwner(secondaryEntity, owner, cert);
 				setApplication(secondaryEntity, entmt.getSecondaryEntity().getApplication(), cert);
 				secondaryEntity = resRepo.save(secondaryEntity);
 
@@ -105,6 +108,13 @@ public class UserResourceEntitlementsConsumer {
 				entitlementRepo.save(entitlement);
 			}
 
+		}
+		
+		if (event.getName().equals(Events.ENTITLEMENTS_PUBLISHED_EVENT)) {
+			EntitlementsPublishedEventDto entitlementsPublishedEvent = (EntitlementsPublishedEventDto) event.getEventData(jsonObjectMapper, EntitlementsPublishedEventDto.class);
+			Certification cert = ServicesUtil.findCertificationById(certRepo, entitlementsPublishedEvent.getTenantName(), entitlementsPublishedEvent.getCertificationName(), 1);
+			cert.setState(CertificationState.IN_PROGRESS);
+			certRepo.save(cert);
 		}
 	}
 
@@ -160,6 +170,9 @@ public class UserResourceEntitlementsConsumer {
 
 		res.setExternalId(resDto.getExternalId());
 		res.setName(resDto.getName());
+		res.setName2(resDto.getName2());
+		res.setName3(resDto.getName3());
+		res.setType(resDto.getType());
 		res.setDescription(resDto.getDescription());
 
 		res.setCertification(cert);
@@ -173,7 +186,7 @@ public class UserResourceEntitlementsConsumer {
 	}
 
 	private void setApplication(Resource res, String appExternalId, Certification cert) {
-		String appId = cert.getTenantName() + cert.getName() + appExternalId;
+		String appId = cert.getTenantName() + appExternalId;
 		Optional<Application> appContainer = appRepo.findById(appId.toLowerCase());
 		Application appEntity = null;
 		if (appContainer.isPresent()) {
@@ -288,4 +301,5 @@ public class UserResourceEntitlementsConsumer {
 		reviewRepo.save(review);
 		return review;
 	}
+	
 }

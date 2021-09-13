@@ -15,6 +15,11 @@ import lombok.Setter;
 @NoArgsConstructor
 @NodeEntity(label = "resource")
 public class Resource extends AbstractEntity {
+	
+	private String name2;
+	private String name3;
+	private String type;
+	
 
 	@Relationship(type = "RES_BELONGS_TO_TEN", direction = Relationship.OUTGOING)
 	private Tenant tenant;

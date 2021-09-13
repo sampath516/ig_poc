@@ -1,4 +1,4 @@
-package com.poc.ig.certification.dto;
+package com.poc.ig.connector.im.dto;
 
 import java.io.Serializable;
 
@@ -43,7 +43,7 @@ public class UserResourceEntitlement  implements  Serializable{
 		
 	}
 	
-	@Data
+	@Data 
 	@Setter
 	@Getter
 	@NoArgsConstructor

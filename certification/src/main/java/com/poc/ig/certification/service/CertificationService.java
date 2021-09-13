@@ -36,7 +36,6 @@ import com.poc.ig.certification.dto.UserResourceEntitlementRequest;
 import com.poc.ig.certification.dto.UserResponse;
 import com.poc.ig.certification.entity.Application;
 import com.poc.ig.certification.entity.Certification;
-import com.poc.ig.certification.entity.Certification.CertificationState;
 import com.poc.ig.certification.entity.Entitlement;
 import com.poc.ig.certification.entity.Entitlement.EntitlementState;
 import com.poc.ig.certification.entity.Entitlement.EntitlementType;
@@ -111,8 +110,7 @@ public class CertificationService {
 
 	@PostMapping(path = "certifications")
 	@ResponseStatus(HttpStatus.CREATED)
-	public CertificationResponse createCertification(@PathVariable String tenantName,
-			@RequestBody CreateCertificationRequest certificationRequest) {
+	public CertificationResponse createCertification(@PathVariable String tenantName, @RequestBody CreateCertificationRequest certificationRequest) {
 
 		Certification cert = new Certification();
 		cert.setName(certificationRequest.getName());
@@ -122,33 +120,36 @@ public class CertificationService {
 		cert.setTenant(ServicesUtil.validateTenant(tenantRepo, tenantName));
 		cert.setTenantName(tenantName);
 
-		Organization org = ServicesUtil.validateOrganization(orgRepo, tenantName,
-				certificationRequest.getOrganization());
+		Organization org = ServicesUtil.validateOrganization(orgRepo, tenantName, certificationRequest.getOrganization());
 		cert.setOrganization(org);
-		
-		UserResponse ownerDto = repositoryClient.getUser(tenantName, certificationRequest.getOwner());
-		User ownerEntity = mapToUserEntity(ownerDto);
-		ownerEntity.setCertification(cert);
-		ownerEntity.setCertificationName(certificationRequest.getName());
-		cert.setOwner(ownerEntity);
-		cert.setState(CertificationState.CREATE);
-		userRepo.save(ownerEntity);
+		User admin = createAdminForCertification(cert);
+		createApplicationForCertification(cert, admin);
+		cert.setOwner(admin);
 		cert = certRepo.save(cert);
-		
-		//Save the Manager hierarchy
-		String manager = ownerDto.getManager();		
-		User managerEntity = null;
-		while(manager != null && !manager.isEmpty()) {
-			UserResponse managerDto = repositoryClient.getUser(tenantName, manager);
-			managerEntity = mapToUserEntity(managerDto);
-			managerEntity.setCertification(cert);
-			managerEntity.setCertificationName(cert.getName());
-			managerEntity = userRepo.save(managerEntity);
-			ownerEntity.setManager(managerEntity);
-			userRepo.save(ownerEntity);
-			ownerEntity = managerEntity;
-			manager = managerDto.getManager();			
-		}	
+		//Temporarily commenting it.
+//		UserResponse ownerDto = repositoryClient.getUser(tenantName, certificationRequest.getOwner());
+//		User ownerEntity = mapToUserEntity(ownerDto);
+//		ownerEntity.setCertification(cert);
+//		ownerEntity.setCertificationName(certificationRequest.getName());
+//		cert.setOwner(ownerEntity);
+//		cert.setState(CertificationState.CREATE);
+//		userRepo.save(ownerEntity);
+//		cert = certRepo.save(cert);
+//		
+//		//Save the Manager hierarchy
+//		String manager = ownerDto.getManager();		
+//		User managerEntity = null;
+//		while(manager != null && !manager.isEmpty()) {
+//			UserResponse managerDto = repositoryClient.getUser(tenantName, manager);
+//			managerEntity = mapToUserEntity(managerDto);
+//			managerEntity.setCertification(cert);
+//			managerEntity.setCertificationName(cert.getName());
+//			managerEntity = userRepo.save(managerEntity);
+//			ownerEntity.setManager(managerEntity);
+//			userRepo.save(ownerEntity);
+//			ownerEntity = managerEntity;
+//			manager = managerDto.getManager();			
+//		}	
 		certEventsProducer.send(new Event<CertificationDto>(Events.NEW_CERTITICATION_EVENT, new CertificationDto(cert), jsonObjectMapper));
 		return new CertificationResponse(cert);
 	}
@@ -240,10 +241,10 @@ public class CertificationService {
 			}
 			reviews = reviewRepo.saveAll(reviews);
 		}
-		updateEntitlements(tenantName, reviews);
+		updateEntitlements(tenantName, reviews, certification);
 	}
 	
-	private void updateEntitlements(String tenantName, Iterable<Review> reviews) {
+	private void updateEntitlements(String tenantName, Iterable<Review> reviews, String certificationName) {
 		List<Entitlement> entmts = new ArrayList<Entitlement>();
 		List<Entitlement> rejectedEntitlements = new ArrayList<Entitlement>();
 		for (Review r : reviews) {
@@ -282,7 +283,9 @@ public class CertificationService {
 			}
 		}
 		entmtRepo.saveAll(entmts);
-		entitlementsRejProducer.sendEvents(tenantName, rejectedEntitlements, jsonObjectMapper);
+		if(!rejectedEntitlements.isEmpty()) {
+			entitlementsRejProducer.sendEvents(tenantName, rejectedEntitlements, jsonObjectMapper, certificationName);
+		}		
 	}
 	
 	private boolean allApproved(Set<Review> reviews) {
@@ -487,6 +490,36 @@ public class CertificationService {
 
 		}
 		return user;
+	}
+	
+	private User createAdminForCertification(Certification cert) {
+		User user = new User();
+		user.setExternalId("imadmin");
+		user.setName("im");
+		user.setFirstName("im");
+		user.setLastName("");
+		user.setEmail("imadmin@IdentEnv.com");
+		user.setTenant(cert.getTenant());
+		user.setOrganization(cert.getOrganization());
+		user.setTenantName(cert.getTenantName());
+		user.setCertificationName(cert.getName());
+		user.setCertification(cert);
+		user = userRepo.save(user);
+		return user;
+	}
+	
+	private Application createApplicationForCertification(Certification cert, User appOwner) {
+		Application app = new Application();
+		app.setExternalId("ad_test");
+		app.setName("ad_test");
+		app.setType("ActiveDirectory");
+		app.setCertificationName(cert.getCertificationName());
+		app.setTenant(cert.getTenant());
+		app.setTenantName(cert.getTenantName());
+		app.setOrganization(cert.getOrganization());
+		app.setOwner(appOwner);
+		app = appRepo.save(app);
+		return app;
 	}
 	
 }

@@ -42,6 +42,21 @@ public class CertificationServiceTests {
 //	@LocalServerPort   
 	//	private int port;
 			private int port=8084;
+	
+//	@Test
+	public void createTenantAndOrganization() {
+		String tenant1 = "IdentityEnv";
+		String tenant1Desc = "IdentityEnv";
+		
+		String t1Org1ExtId = "IM";
+		String t1Org1Name = "IM";
+		String t1Org1Desc = "Identity Manager";
+		
+		//Create a Tenant and Organization		
+		CertificationTestUtil.createTenant(tenant1, tenant1Desc);
+		OrganizationDto org1 = new OrganizationDto(t1Org1ExtId, t1Org1Name, t1Org1Desc);
+		CertificationTestUtil.createOrganization(tenant1, org1);
+	}
     
 //	@Test
     public void testCertifications() {
@@ -109,7 +124,7 @@ public class CertificationServiceTests {
     	
     }
 	
-	@Test
+	//@Test
     public void testCertifications_v1() {
 		
 		String tenant1 = "Broadcom";
@@ -174,11 +189,60 @@ public class CertificationServiceTests {
 		} 
 		action = new Action();
 		action.setComments("Approved from JUnit");
-		action.setType(ActionType.APPROVE);
+		action.setType(ActionType.APPROVE); 
 		
 		revReq.setAction(action);
 		
 		CertificationTestUtil.updateReviews(tenant1, certName, reviewer, revReq);
 		
+	}
+    
+	@Test
+    public void testCertificationsWithIMConnector() {
+		
+		String tenant1 = "IdentityEnv";
+		String t1Org1ExtId = "IM";
+
+		
+		//Create Certification
+		String certName = "Demo6";
+		String certDesc = "This is  test certification";
+		//String CertOwner = "USER-EID-2";
+		CertificationType certType = CertificationType.USER_PREVILEGES; 
+		CreateCertificationRequest request = new CreateCertificationRequest();
+		request.setName(certName);
+		request.setDescription(certDesc);
+		request.setCertificationType(certType);
+		request.setTenantName(tenant1);
+		request.setOrganization(t1Org1ExtId);
+		//request.setOwner(CertOwner);
+		CertificationTestUtil.createCertification(tenant1, request);	
+		try {
+			Thread.sleep(10*1000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		//Get open reviews
+		String reviewer = "imadmin";
+		GetReviewsByCertificationAndReviewerResponse  response =	CertificationTestUtil.getReviews(tenant1, certName, reviewer, ReviewState.OPEN);
+		List<ReviewResponse>  reviews = response.getReviews();
+		
+		// Approve/Reject reviews and submit
+		ReviewRequest revReq = new ReviewRequest();
+		for(ReviewResponse r: reviews) {
+			if(r.getSecondaryEntity().getExternalId().contains("Schema Admins")) {
+				revReq.getReviewIds().add(r.getReviewId());
+			}
+		} 
+		Action action = new Action();
+		action.setComments("Approved from JUnit");
+		action.setType(ActionType.REJECT);
+		
+		revReq.setAction(action);
+		
+		CertificationTestUtil.updateReviews(tenant1, certName, reviewer, revReq);
+			
 	}
 }

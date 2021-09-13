@@ -1,12 +1,11 @@
-package com.poc.ig.certification.events.dto;
+package com.poc.ig.connector.im.events.dto;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.poc.ig.certification.entity.Entitlement.EntitlementType;
 
 import lombok.Data;
 import lombok.Getter;
@@ -17,7 +16,7 @@ import lombok.Setter;
 @Setter
 @Getter
 @NoArgsConstructor
-public class EntitlementsRejectedEvent implements Serializable {
+public class EntitlementsRejectedEvent implements Serializable { 
 	private static final long serialVersionUID = 1L;
 	
 	private String tenant;
@@ -69,5 +68,30 @@ public class EntitlementsRejectedEvent implements Serializable {
 			this.externalId = externalId;
 		}	
 			
+	}
+	
+	public static enum EntitlementType {
+		USER_RESOURCE(1), USER_ROLE(2), ROLE_RESOURCE(3);
+
+		private int value;
+
+		private EntitlementType(int value) {
+			this.value = value;
+		}
+
+		public int getValue() {
+			return value;
+		}
+
+		public static EntitlementType fromValue(int value) {
+			for (EntitlementType v : values()) {
+				if (v.value == value) {
+					return v;
+				}
+			}
+			throw new IllegalArgumentException(
+					"Unknown Review Action enum type " + value + ", Allowed values are " + Arrays.toString(values()));
+		}
+
 	}
 }

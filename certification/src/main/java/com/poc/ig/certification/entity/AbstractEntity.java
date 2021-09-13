@@ -29,7 +29,7 @@ public abstract class AbstractEntity {
 	private String externalId;
 	private String name;
 	private String tenantName;
-	private String certificationName;
+	private String certificationName="";
 	private String description;
 	
 	@CreatedDate

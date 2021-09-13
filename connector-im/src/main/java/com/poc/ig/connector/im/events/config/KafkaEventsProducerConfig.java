@@ -1,4 +1,4 @@
-package com.poc.ig.certification.events.config;
+package com.poc.ig.connector.im.events.config;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,8 +13,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
-import com.poc.ig.certification.events.KafkaTopics;
-import com.poc.ig.certification.events.dto.Event;
+import com.poc.ig.connector.im.events.KafkaTopics;
+import com.poc.ig.connector.im.events.dto.Event;
 
 @Configuration
 public class KafkaEventsProducerConfig {
@@ -38,12 +38,12 @@ public class KafkaEventsProducerConfig {
 	
     @Bean
     public NewTopic certificationEventsTopic() {
-         return new NewTopic(KafkaTopics.CERTIFICATION_EVENT_TOPIC, 1, (short) 1);
+         return new NewTopic(KafkaTopics.ENTITLEMENTS_EVENT_TOPIC, 1, (short) 1);
     }
     
-    @Bean
-    public NewTopic entitlementRejectionEventsTopic() {
-         return new NewTopic(KafkaTopics.ENTITLEMENT_REJECTION_EVENT_TOPIC, 1, (short) 1);
-    }
+//    @Bean
+//    public NewTopic repositoryEventsTopic() {
+//         return new NewTopic(KafkaTopics.REPOSITORY_EVENT_TOPIC, 1, (short) 1);
+//    }
 
 }

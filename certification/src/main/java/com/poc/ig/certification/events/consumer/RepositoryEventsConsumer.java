@@ -23,7 +23,7 @@ public class RepositoryEventsConsumer {
 	
 	@Autowired
 	CertificationRepository certRepo;
-	
+	//TODO: Is this consumer required?
 	@KafkaListener(containerFactory = "kafkaEventsListenerContainerFactory", topics = KafkaTopics.REPOSITORY_EVENT_TOPIC)
 	public void listen(@SuppressWarnings("rawtypes") Event event) {
 		
